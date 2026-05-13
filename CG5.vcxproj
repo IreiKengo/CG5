@@ -1,0 +1,266 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Development|x64">
+      <Configuration>Development</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>17.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{7a9b8452-4207-45a6-81ce-81c8d35bd2fe}</ProjectGuid>
+    <RootNamespace>CG5</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>CG5</ProjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Development|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Development|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <PostBuildEventUseInBuild>true</PostBuildEventUseInBuild>
+    <OutDir>$(SolutionDir)..\generated\outputs\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)..\generated\obj\$(ProjectName)\$(Configuration)\</IntDir>
+    <IncludePath>$(SolutionDir)DirectXTex;$(SolutionDir)imgui;$(IncludePath)</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <PostBuildEventUseInBuild>true</PostBuildEventUseInBuild>
+    <OutDir>$(SolutionDir)..\generated\outputs\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)..\generated\obj\$(ProjectName)\$(Configuration)\</IntDir>
+    <IncludePath>$(SolutionDir)DirectXTex;$(SolutionDir)imgui;$(IncludePath)</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Development|x64'">
+    <PostBuildEventUseInBuild>true</PostBuildEventUseInBuild>
+    <OutDir>$(SolutionDir)..\generated\outputs\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)..\generated\obj\$(ProjectName)\$(Configuration)\</IntDir>
+    <IncludePath>$(SolutionDir)DirectXTex;$(SolutionDir)imgui;$(IncludePath)</IncludePath>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_DEBUG;_WINDOWS;USE_IMGUI;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <TreatWarningAsError>true</TreatWarningAsError>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)ヘッダーファイル;$(ProjectDir)ヘッダーファイル\application;$(ProjectDir)ヘッダーファイル\engine\audio;$(ProjectDir)ヘッダーファイル\engine\base;$(ProjectDir)ヘッダーファイル\engine\debug;$(ProjectDir)ヘッダーファイル\engine\graphics\2d;$(ProjectDir)ヘッダーファイル\engine\graphics\3d;$(ProjectDir)ヘッダーファイル\engine\graphics\common;$(ProjectDir)ヘッダーファイル\engine\input;$(ProjectDir)ヘッダーファイル\engine\math;$(ProjectDir)ヘッダーファイル\engine\resource;$(ProjectDir)ソースファイル;$(ProjectDir)ソースファイル\application;$(ProjectDir)ソースファイル\engine\audio;$(ProjectDir)ソースファイル\engine\base;$(ProjectDir)ソースファイル\engine\debug;$(ProjectDir)ソースファイル\engine\graphics\2d;$(ProjectDir)ソースファイル\engine\graphics\3d;$(ProjectDir)ソースファイル\engine\graphics\common;$(ProjectDir)ソースファイル\engine\input;$(ProjectDir)ソースファイル\engine\math;$(ProjectDir)ソースファイル\engine\resource;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalOptions>/ignore:4049 /ignore:4098 %(AdditionalOptions)</AdditionalOptions>
+      <TreatLinkerWarningAsErrors>true</TreatLinkerWarningAsErrors>
+      <AdditionalLibraryDirectories>$(SolutionDir)..\generated\outputs\$(Configuration)\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>imgui.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <PostBuildEvent>
+      <Command>copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxcompiler.dll" "$(TargetDir)dxcompiler.dll"
+copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dxil.dll"</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <Optimization>Full</Optimization>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)ヘッダーファイル;$(ProjectDir)ヘッダーファイル\application;$(ProjectDir)ヘッダーファイル\engine\audio;$(ProjectDir)ヘッダーファイル\engine\base;$(ProjectDir)ヘッダーファイル\engine\debug;$(ProjectDir)ヘッダーファイル\engine\graphics\2d;$(ProjectDir)ヘッダーファイル\engine\graphics\3d;$(ProjectDir)ヘッダーファイル\engine\graphics\common;$(ProjectDir)ヘッダーファイル\engine\input;$(ProjectDir)ヘッダーファイル\engine\math;$(ProjectDir)ヘッダーファイル\engine\resource;$(ProjectDir)ソースファイル;$(ProjectDir)ソースファイル\application;$(ProjectDir)ソースファイル\engine\audio;$(ProjectDir)ソースファイル\engine\base;$(ProjectDir)ソースファイル\engine\debug;$(ProjectDir)ソースファイル\engine\graphics\2d;$(ProjectDir)ソースファイル\engine\graphics\3d;$(ProjectDir)ソースファイル\engine\graphics\common;$(ProjectDir)ソースファイル\engine\input;$(ProjectDir)ソースファイル\engine\math;$(ProjectDir)ソースファイル\engine\resource;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(SolutionDir)..\generated\outputs\$(Configuration)\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <PostBuildEvent>
+      <Command>copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxcompiler.dll" "$(TargetDir)dxcompiler.dll"
+copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dxil.dll"</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Development|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NDEBUG;_WINDOWS;USE_IMGUI;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <Optimization>Disabled</Optimization>
+      <WholeProgramOptimization>false</WholeProgramOptimization>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)ヘッダーファイル;$(ProjectDir)ヘッダーファイル\application;$(ProjectDir)ヘッダーファイル\engine\audio;$(ProjectDir)ヘッダーファイル\engine\base;$(ProjectDir)ヘッダーファイル\engine\debug;$(ProjectDir)ヘッダーファイル\engine\graphics\2d;$(ProjectDir)ヘッダーファイル\engine\graphics\3d;$(ProjectDir)ヘッダーファイル\engine\graphics\common;$(ProjectDir)ヘッダーファイル\engine\input;$(ProjectDir)ヘッダーファイル\engine\math;$(ProjectDir)ヘッダーファイル\engine\resource;$(ProjectDir)ソースファイル;$(ProjectDir)ソースファイル\application;$(ProjectDir)ソースファイル\engine\audio;$(ProjectDir)ソースファイル\engine\base;$(ProjectDir)ソースファイル\engine\debug;$(ProjectDir)ソースファイル\engine\graphics\2d;$(ProjectDir)ソースファイル\engine\graphics\3d;$(ProjectDir)ソースファイル\engine\graphics\common;$(ProjectDir)ソースファイル\engine\input;$(ProjectDir)ソースファイル\engine\math;$(ProjectDir)ソースファイル\engine\resource;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <LinkTimeCodeGeneration />
+      <AdditionalLibraryDirectories>$(SolutionDir)..\generated\outputs\$(Configuration)\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>imgui.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <PostBuildEvent>
+      <Command>copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxcompiler.dll" "$(TargetDir)dxcompiler.dll"
+copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dxil.dll"</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="Framework.cpp" />
+    <ClCompile Include="ソースファイル\engine\graphics\3d\Camera.cpp" />
+    <ClCompile Include="ソースファイル\engine\debug\D3DResourceLeakChecker.cpp" />
+    <ClCompile Include="ソースファイル\engine\base\DirectXCommon.cpp" />
+    <ClCompile Include="ソースファイル\application\Game.cpp" />
+    <ClCompile Include="ソースファイル\engine\debug\ImguiManager.cpp" />
+    <ClCompile Include="ソースファイル\engine\input\Input.cpp" />
+    <ClCompile Include="ソースファイル\engine\debug\Logger.cpp" />
+    <ClCompile Include="ソースファイル\application\main.cpp">
+      <Optimization Condition="'$(Configuration)|$(Platform)'=='Development|x64'">MaxSpeed</Optimization>
+      <WholeProgramOptimization Condition="'$(Configuration)|$(Platform)'=='Development|x64'">true</WholeProgramOptimization>
+    </ClCompile>
+    <ClCompile Include="ソースファイル\engine\math\Matrix4x4Math.cpp" />
+    <ClCompile Include="ソースファイル\engine\graphics\3d\Model.cpp" />
+    <ClCompile Include="ソースファイル\engine\graphics\common\ModelCommon.cpp" />
+    <ClCompile Include="ソースファイル\engine\resource\ModelManager.cpp" />
+    <ClCompile Include="ソースファイル\engine\graphics\3d\Object3d.cpp" />
+    <ClCompile Include="ソースファイル\engine\graphics\common\Object3dCommon.cpp" />
+    <ClCompile Include="ソースファイル\engine\graphics\2d\ParticleEmitter.cpp" />
+    <ClCompile Include="ソースファイル\engine\graphics\2d\ParticleManager.cpp" />
+    <ClCompile Include="ソースファイル\engine\audio\Sound.cpp" />
+    <ClCompile Include="ソースファイル\engine\graphics\2d\Sprite.cpp" />
+    <ClCompile Include="ソースファイル\engine\graphics\common\SpriteCommon.cpp" />
+    <ClCompile Include="ソースファイル\engine\base\SrvManager.cpp" />
+    <ClCompile Include="ソースファイル\engine\base\StringUtility.cpp" />
+    <ClCompile Include="ソースファイル\engine\resource\TextureManager.cpp" />
+    <ClCompile Include="ソースファイル\engine\base\WinApp.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="resources\shaders\Object3d.PS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Development|x64'">Pixel</ShaderType>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Development|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="resources\shaders\Object3d.VS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Development|x64'">Vertex</ShaderType>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Development|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="resources\shaders\Particle.PS.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Development|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="resources\shaders\Particle.VS.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Development|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Framework.h" />
+    <ClInclude Include="ヘッダーファイル\engine\graphics\3d\Camera.h" />
+    <ClInclude Include="ヘッダーファイル\engine\debug\D3DResourceLeakChecker.h" />
+    <ClInclude Include="ヘッダーファイル\engine\base\DirectXCommon.h" />
+    <ClInclude Include="ヘッダーファイル\application\Game.h" />
+    <ClInclude Include="ヘッダーファイル\engine\debug\ImguiManager.h" />
+    <ClInclude Include="ヘッダーファイル\engine\input\Input.h" />
+    <ClInclude Include="ヘッダーファイル\engine\debug\Logger.h" />
+    <ClInclude Include="ヘッダーファイル\engine\math\Matrix4x4Math.h" />
+    <ClInclude Include="ヘッダーファイル\engine\math\Matrix3x3.h" />
+    <ClInclude Include="ヘッダーファイル\engine\math\Matrix4x4.h" />
+    <ClInclude Include="ヘッダーファイル\engine\graphics\3d\Model.h" />
+    <ClInclude Include="ヘッダーファイル\engine\graphics\common\ModelCommon.h" />
+    <ClInclude Include="ヘッダーファイル\engine\resource\ModelManager.h" />
+    <ClInclude Include="ヘッダーファイル\engine\graphics\3d\Object3d.h" />
+    <ClInclude Include="ヘッダーファイル\engine\graphics\common\Object3dCommon.h" />
+    <ClInclude Include="ヘッダーファイル\engine\graphics\2d\ParticleEmitter.h" />
+    <ClInclude Include="ヘッダーファイル\engine\graphics\2d\ParticleManager.h" />
+    <ClInclude Include="ヘッダーファイル\engine\audio\Sound.h" />
+    <ClInclude Include="ヘッダーファイル\engine\graphics\2d\Sprite.h" />
+    <ClInclude Include="ヘッダーファイル\engine\graphics\common\SpriteCommon.h" />
+    <ClInclude Include="ヘッダーファイル\engine\base\SrvManager.h" />
+    <ClInclude Include="ヘッダーファイル\engine\base\StringUtility.h" />
+    <ClInclude Include="ヘッダーファイル\engine\resource\TextureManager.h" />
+    <ClInclude Include="ヘッダーファイル\engine\math\Transform.h" />
+    <ClInclude Include="ヘッダーファイル\engine\math\Vector2.h" />
+    <ClInclude Include="ヘッダーファイル\engine\math\Vector3.h" />
+    <ClInclude Include="ヘッダーファイル\engine\math\Vector4.h" />
+    <ClInclude Include="ヘッダーファイル\engine\base\WinApp.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="externals\DirectXTex\DirectXTex_Desktop_2022_Win10.vcxproj">
+      <Project>{371b9fa9-4c90-4ac6-a123-aced756d6c77}</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="resources\shaders\Object3d.hlsli">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Development|x64'">
+      </ExcludedFromBuild>
+    </None>
+    <None Include="resources\shaders\Particle.hlsli" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
