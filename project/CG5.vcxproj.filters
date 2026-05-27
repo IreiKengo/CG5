@@ -87,6 +87,9 @@
     <ClCompile Include="Framework.cpp">
       <Filter>ソース ファイル\engine\base</Filter>
     </ClCompile>
+    <ClCompile Include="RtvManager.cpp">
+      <Filter>ソース ファイル\engine\base</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ヘッダーファイル\engine\math\Vector2.h">
@@ -174,6 +177,9 @@
       <Filter>ヘッダー ファイル\engine\graphics\common</Filter>
     </ClInclude>
     <ClInclude Include="Framework.h">
+      <Filter>ヘッダー ファイル\engine\base</Filter>
+    </ClInclude>
+    <ClInclude Include="RtvManager.h">
       <Filter>ヘッダー ファイル\engine\base</Filter>
     </ClInclude>
   </ItemGroup>

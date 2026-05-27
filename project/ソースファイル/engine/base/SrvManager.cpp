@@ -89,7 +89,7 @@ void SrvManager::PreDraw()
 {
 
 	//描画用のDescriptorHeapの設定
-	ID3D12DescriptorHeap* descriptorHeaps[] = { descriptorHeap.Get() };
+	ID3D12DescriptorHeap* descriptorHeaps[] = { GetDescriptorHeap()};
 	dxCommon_->GetCommandList()->SetDescriptorHeaps(1, descriptorHeaps);
 
 }
@@ -104,7 +104,7 @@ void SrvManager::SetGraphicsRootDescriptorTable(UINT RootParameterIndex, uint32_
 
 }
 
-bool SrvManager::CanAllocateTexture()
+bool SrvManager::CanAllocate()
 {
 	//テクスチャ枚数上限チェック
 	return useIndex < kMaxSRVCount;;

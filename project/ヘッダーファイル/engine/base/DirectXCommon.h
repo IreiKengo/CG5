@@ -8,7 +8,9 @@
 #include <string>
 #include "externals/DirectXTex/DirectXTex.h"
 #include <chrono>
-
+#include "Vector4.h"
+#include "SrvManager.h"
+#include "RtvManager.h"
 
 
 
@@ -35,6 +37,8 @@ public:
 	ID3D12CommandQueue* GetCommandQueue() const { return commandQueue.Get(); }
 	const DXGI_SWAP_CHAIN_DESC1& GetSwapChainDesc()const { return swapChainDesc; }
 	const DXGI_FORMAT& GetRTVFormat()const { return rtvFormat_; }
+	SrvManager* GetSrvManager() { return &srvManager_; }
+	RtvManager* GetRtvManager() { return &rtvManager_; }
 
 	//シェーダーのコンパイル
 	Microsoft::WRL::ComPtr<IDxcBlob> CompileShader(
@@ -44,6 +48,10 @@ public:
 	Microsoft::WRL::ComPtr<ID3D12Resource> CreateBufferResource(size_t sizeInBytess);
 
 	Microsoft::WRL::ComPtr<ID3D12Resource> CreateTextureResource(const DirectX::TexMetadata& metadata);
+
+	Microsoft::WRL::ComPtr<ID3D12Resource> CreateRenderTextureResource(DXGI_FORMAT format, const Vector4& clearColor);
+
+
 
 	[[nodiscard]]
 	Microsoft::WRL::ComPtr<ID3D12Resource> UploadTextureData(const Microsoft::WRL::ComPtr<ID3D12Resource>& texture, const DirectX::ScratchImage& mipImages);
@@ -71,19 +79,16 @@ private:
 	Microsoft::WRL::ComPtr<ID3D12Resource> depthResource = nullptr;
 
 	//深度バッファ
-//	HRESULT hr;
+
 	//各種デスクリプタサイズ
-	uint32_t descriptorSizeRTV;
 	uint32_t descriptorSizeDSV;
 
-	//RTVのデスクリプターヒープ
-	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> rtvDescriptorHeap;
+	
 	
 	//DSVのデスクリプターヒープ
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> dsvDescriptorHeap;
 
-	//RTVを２つ作るのでディスクリプタを２つ用意
-	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandles[2];
+	
 
 	//スワップチェーンリソース
 	std::array<Microsoft::WRL::ComPtr<ID3D12Resource>, 2> swapChainResources;
@@ -119,8 +124,11 @@ std::chrono::steady_clock::time_point reference_;
 
 
 
-
-
+SrvManager srvManager_;
+RtvManager rtvManager_;
+// RenderTexture用のリソースとSRVインデックス
+Microsoft::WRL::ComPtr<ID3D12Resource> renderTextureResource;
+uint32_t renderTextureSrvIndex_ = 0;
 
 
 //デバイスの初期化
@@ -165,11 +173,8 @@ void InitializeFixFPS();
 void UpdateFixFPS();
 
 
+void InitializeRenderTexture();
 
-
-
-static D3D12_CPU_DESCRIPTOR_HANDLE GetCPUDescriptorHandle(const Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>& descriptorHeap, uint32_t descriptorSize, uint32_t index);
-static D3D12_GPU_DESCRIPTOR_HANDLE GetGPUDescriptorHandle(const Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>& descriptorHeap, uint32_t descriptorSize, uint32_t index);
 
 
 

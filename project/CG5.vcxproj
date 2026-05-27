@@ -162,6 +162,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Framework.cpp" />
+    <ClCompile Include="RtvManager.cpp" />
     <ClCompile Include="ソースファイル\engine\graphics\3d\Camera.cpp" />
     <ClCompile Include="ソースファイル\engine\debug\D3DResourceLeakChecker.cpp" />
     <ClCompile Include="ソースファイル\engine\base\DirectXCommon.cpp" />
@@ -219,6 +220,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Framework.h" />
+    <ClInclude Include="RtvManager.h" />
     <ClInclude Include="ヘッダーファイル\engine\graphics\3d\Camera.h" />
     <ClInclude Include="ヘッダーファイル\engine\debug\D3DResourceLeakChecker.h" />
     <ClInclude Include="ヘッダーファイル\engine\base\DirectXCommon.h" />

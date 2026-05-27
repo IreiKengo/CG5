@@ -15,7 +15,7 @@ class ImguiManager
 {
 public:
 
-	void Initialize(WinApp* winApp, DirectXCommon* dxCommon, SrvManager* srvManager);
+	void Initialize(WinApp* winApp, DirectXCommon* dxCommon);
 	void Finalize();
 
 	void Begin();

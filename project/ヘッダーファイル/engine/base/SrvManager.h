@@ -33,7 +33,7 @@ public:
 
 	void SetGraphicsRootDescriptorTable(UINT RootParameterIndex, uint32_t srvIndex);
 
-	bool CanAllocateTexture();
+	bool CanAllocate();
 
 	ID3D12DescriptorHeap* GetDescriptorHeap() const { return descriptorHeap.Get(); }
 
@@ -43,7 +43,7 @@ private:
 	DirectXCommon* dxCommon_ = nullptr;
 
 	//デスクリプタサイズ
-	uint32_t descriptorSize;
+	uint32_t descriptorSize = 0;
 
 	//SRVのデスクリプターヒープ
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> descriptorHeap;

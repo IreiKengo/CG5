@@ -6,14 +6,14 @@
 #include "DirectXCommon.h"
 #include "SrvManager.h"
 
-void ImguiManager::Initialize([[maybe_unused]] WinApp* winApp, [[maybe_unused]] DirectXCommon* dxCommon, [[maybe_unused]] SrvManager* srvManager)
+void ImguiManager::Initialize([[maybe_unused]] WinApp* winApp, [[maybe_unused]] DirectXCommon* dxCommon)
 {
 #ifdef USE_IMGUI
 
 
 	winApp_ = winApp;
 	dxCommon_ = dxCommon;
-	srvManager_ = srvManager;
+	srvManager_ = dxCommon_->GetSrvManager();
 
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();

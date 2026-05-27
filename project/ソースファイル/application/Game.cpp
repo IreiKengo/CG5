@@ -260,7 +260,7 @@ void Game::Draw()
 	//全てのObject3d個々の描画
 	for (uint32_t i = 0; i < 2; ++i)
 	{
-		object[i]->Draw();
+		object[0]->Draw();
 
 	}
 
@@ -269,7 +269,7 @@ void Game::Draw()
 
 
 	//Spriteの描画
-	sprite->Draw();
+	//sprite->Draw();
 
 
 	//ParticleManager::GetInstance()->Draw();

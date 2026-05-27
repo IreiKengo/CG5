@@ -6,7 +6,6 @@
 #include <format>
 
 
-
 #include "externals/DirectXTex/d3dx12.h"
 #include <thread>
 #include <strsafe.h>
@@ -46,6 +45,11 @@ void DirectXCommon::Initialize(WinApp* winApp)
 	CreateDepthStencilTextureResource();
 	//各種デスクリプターヒープの生成
 	CreateDescriptorHeaps();
+
+	srvManager_.Initialize(this);
+	rtvManager_.Initialize(this);
+
+
 	//レンダーターゲットビューの初期化
 	InitializeRenderTargetView();
 	//深度ステンシルビューの初期化
@@ -58,12 +62,16 @@ void DirectXCommon::Initialize(WinApp* winApp)
 	InitializescissorRect();
 	//DXCコンパイラの生成
 	CreateDXCCompiler();
+
+	InitializeRenderTexture();
+
 	
 
 }
 
 void DirectXCommon::PreDraw()
 {
+
 
 	// これから書き込むバッグバッファのインデックスを取得
 	UINT backBufferIndex = swapChain->GetCurrentBackBufferIndex();
@@ -84,11 +92,12 @@ void DirectXCommon::PreDraw()
 
 	//描画先のRTVとDSVを設定する
 	D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = dsvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
-	commandList->OMSetRenderTargets(1, &rtvHandles[backBufferIndex], false, &dsvHandle);
+
+	commandList->OMSetRenderTargets(1,&rtvManager_.GetSwapChainHandle(backBufferIndex),false,&dsvHandle);
 	//指定した色で画面全体をクリアする
 	float clearColor[] = { 0.1f,0.25f,0.5f,1.0f };//青っぽい色。RGBAの順
+	commandList->ClearRenderTargetView(rtvManager_.GetSwapChainHandle(backBufferIndex), clearColor, 0, nullptr);
 	commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
-	commandList->ClearRenderTargetView(rtvHandles[backBufferIndex], clearColor, 0, nullptr);
 	
 
 	commandList->RSSetViewports(1, &viewport);//Viewportを設定
@@ -307,8 +316,8 @@ void DirectXCommon::CreateDepthStencilTextureResource()
 {
 	//DepthStencil用のResource　の設定
 	D3D12_RESOURCE_DESC resourceDesc{};
-	resourceDesc.Width = winApp_->kClientWidth;//Textureの幅
-	resourceDesc.Height = winApp_->kClientHeight;//Textureの高さ
+	resourceDesc.Width = WinApp::kClientWidth;//Textureの幅
+	resourceDesc.Height = WinApp::kClientHeight;//Textureの高さ
 	resourceDesc.MipLevels = 1;// mipmapの数
 	resourceDesc.DepthOrArraySize = 1; //奥行き or 配列Textureの配列数
 	resourceDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;//DepthStencilとして利用可能なフォーマット
@@ -345,19 +354,16 @@ void DirectXCommon::CreateDescriptorHeaps()
 {
 
 	//DescriptorSizeを取得しておく
-	descriptorSizeRTV = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 	descriptorSizeDSV = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
 
 
 	//ディスクリプタヒープの生成
-	//RTV用のヒープでディスクリプタの数は2。RTVはShader内で触れるものではないので、ShaderVisibleはfalse
-	rtvDescriptorHeap = CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 2, false);
 	//DSV用のヒープでディスクリプタの数は1。DSVはShader内で触れるものではないので、ShaderVisibleはfalse
 	dsvDescriptorHeap = CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 1, false);
 
 }
 
-void DirectXCommon::InitializeRenderTargetView()
+void DirectXCommon::InitializeRenderTargetView()	
 {
 	HRESULT hr;
 
@@ -369,24 +375,16 @@ void DirectXCommon::InitializeRenderTargetView()
 	hr = swapChain->GetBuffer(1, IID_PPV_ARGS(&swapChainResources[1]));
 	assert(SUCCEEDED(hr));
 
-	//RTVの設定
-	D3D12_RENDER_TARGET_VIEW_DESC rtvDesc{};
-	rtvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;//出力結果をSRGBに変換して書き込む
-	rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;//2dテクスチャとして書き込む
-
-	//ディスクリプタの先頭を取得する
-	D3D12_CPU_DESCRIPTOR_HANDLE rtvStartHandle = rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
-
-
-	D3D12_CPU_DESCRIPTOR_HANDLE handle = rtvStartHandle;
+	
 	//裏表2枚
 	for (uint32_t i = 0; i < 2; ++i)
 	{
 
-		rtvHandles[i] = handle;
-
-		device->CreateRenderTargetView(swapChainResources[i].Get(), &rtvDesc, rtvHandles[i]);
-		handle.ptr += descriptorSizeRTV;
+		rtvManager_.CreateSwapChain(
+			i,
+			swapChainResources[i].Get(),
+			DXGI_FORMAT_R8G8B8A8_UNORM_SRGB
+		);
 
 	}
 }
@@ -638,9 +636,68 @@ Microsoft::WRL::ComPtr<ID3D12Resource> DirectXCommon::CreateTextureResource(cons
 	return resource;
 }
 
-Microsoft::WRL::ComPtr<ID3D12Resource> DirectXCommon::UploadTextureData(const Microsoft::WRL::ComPtr<ID3D12Resource>& texture, const DirectX::ScratchImage& mipImages)
+Microsoft::WRL::ComPtr<ID3D12Resource> DirectXCommon::CreateRenderTextureResource(DXGI_FORMAT format, const Vector4& clearColor)
+{
+	
+	//1.metadataを基にResourceの設定
+	D3D12_RESOURCE_DESC resourceDesc{};
+	resourceDesc.Width = WinApp::kClientWidth;//Textureの幅
+	resourceDesc.Height = WinApp::kClientHeight;//Textureの高さ
+	resourceDesc.MipLevels = 1;//mipmapの数
+	resourceDesc.DepthOrArraySize = 1;//奥行き or 配列Textureの配列数
+	resourceDesc.Format = format;//TextureのFormat
+	resourceDesc.SampleDesc.Count = 1;//サンプリングカウント。1固定
+	resourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;//Textureの次元数。普段使っているのは2次元
+	resourceDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;//RenderTargetとして利用可能にする
+
+	//2.利用するHeapの設定。非常に特殊な運用。
+	D3D12_HEAP_PROPERTIES heapProperties{};
+	heapProperties.Type = D3D12_HEAP_TYPE_DEFAULT;//当然VRAM上に作る
+
+	D3D12_CLEAR_VALUE clearValue;
+	clearValue.Format = format;
+	clearValue.Color[0] = clearColor.x;
+	clearValue.Color[1] = clearColor.y;
+	clearValue.Color[2] = clearColor.z;
+	clearValue.Color[3] = clearColor.w;
+
+
+
+	//3.Resourceを生成する
+	Microsoft::WRL::ComPtr<ID3D12Resource> resource = nullptr;
+	HRESULT hr = device->CreateCommittedResource(
+		&heapProperties,//Heapの設定
+		D3D12_HEAP_FLAG_NONE,//Heapの特殊な設定。特になし
+		&resourceDesc,//Resourceの設定
+		D3D12_RESOURCE_STATE_RENDER_TARGET,//これから描画することを前提としたTextureなのでRenderTargetとして使うことから始まる
+		&clearValue,//Clear最適値。ClearRenderTargetをこの色でClearするようにする。最適化されているので酵素kである。
+		IID_PPV_ARGS(&resource));//作成するResourceポインタへのポインタ
+	assert(SUCCEEDED(hr));
+	return resource;
+
+}
+
+void DirectXCommon::InitializeRenderTexture()
 {
 
+	const Vector4 kRenderTargetClearValue{ 1.0f,0.0f,0.0f,1.0f };//いったんわかりやすいように赤
+	renderTextureResource = CreateRenderTextureResource(DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,kRenderTargetClearValue);
+
+	//RTVの作成
+	uint32_t rtvIndex = rtvManager_.Allocate();
+	rtvManager_.CreateRTVforTexture2D(rtvIndex, renderTextureResource.Get(), DXGI_FORMAT_R8G8B8A8_UNORM_SRGB);
+
+	//SRVの作成
+	renderTextureSrvIndex_ = srvManager_.Allocate();
+	srvManager_.CreateSRVforTexture2D(renderTextureSrvIndex_, renderTextureResource.Get(), DXGI_FORMAT_R8G8B8A8_UNORM_SRGB, 1);
+
+	
+
+}
+
+Microsoft::WRL::ComPtr<ID3D12Resource> DirectXCommon::UploadTextureData(const Microsoft::WRL::ComPtr<ID3D12Resource>& texture, const DirectX::ScratchImage& mipImages)
+{
+	
 
 	std::vector<D3D12_SUBRESOURCE_DATA> subresources;
 	DirectX::PrepareUpload(device.Get(), mipImages.GetImages(), mipImages.GetImageCount(), mipImages.GetMetadata(), subresources);
@@ -648,6 +705,7 @@ Microsoft::WRL::ComPtr<ID3D12Resource> DirectXCommon::UploadTextureData(const Mi
 	Microsoft::WRL::ComPtr<ID3D12Resource> intermediateResource = CreateBufferResource(intermediateSize);
 	UpdateSubresources(commandList.Get(), texture.Get(), intermediateResource.Get(), 0, 0, UINT(subresources.size()), subresources.data());
 	//Textureへの転送後は利用できるよう、D3D12_RESOURCE_STATE_COPY_DESTからD3D12_RESOURCE_STATE_GENERIC_READへResourceStateを変更する
+	//バリアを作る
 	D3D12_RESOURCE_BARRIER barrier{};
 	barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
 	barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
@@ -656,30 +714,8 @@ Microsoft::WRL::ComPtr<ID3D12Resource> DirectXCommon::UploadTextureData(const Mi
 	barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_COPY_DEST;
 	barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 	commandList->ResourceBarrier(1, &barrier);
+
 	return intermediateResource;
 
 
-}
-
-
-
-D3D12_CPU_DESCRIPTOR_HANDLE DirectXCommon::GetCPUDescriptorHandle(const Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>& descriptorHeap, uint32_t descriptorSize, uint32_t index)
-{
-
-	
-
-	//SRVを作成するDescriptorHeapの場所を決める
-	D3D12_CPU_DESCRIPTOR_HANDLE handleCPU = descriptorHeap->GetCPUDescriptorHandleForHeapStart();
-
-	handleCPU.ptr += descriptorSize * index;
-	return handleCPU;
-}
-D3D12_GPU_DESCRIPTOR_HANDLE DirectXCommon::GetGPUDescriptorHandle(const Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>& descriptorHeap, uint32_t descriptorSize, uint32_t index)
-{
-	
-	//SRVを作成するDescriptorHeapの場所を決める
-	D3D12_GPU_DESCRIPTOR_HANDLE handleGPU = descriptorHeap->GetGPUDescriptorHandleForHeapStart();
-	//先頭はImGuiが使っているのでその次を使う
-	handleGPU.ptr += descriptorSize * index;
-	return handleGPU;
 }

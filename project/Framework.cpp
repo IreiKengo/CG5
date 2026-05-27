@@ -54,7 +54,7 @@ void Framework::Initialize()
 
 	imgui = new ImguiManager();
 
-	imgui->Initialize(winApp, dxCommon, srvManager);
+	imgui->Initialize(winApp, dxCommon);
 
 #pragma endregion
 
