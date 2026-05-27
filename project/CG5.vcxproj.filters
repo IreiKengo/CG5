@@ -13,6 +13,12 @@
     <FxCompile Include="resources\shaders\Particle.PS.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
+    <FxCompile Include="resources\shaders\CopyImage.PS.hlsl">
+      <Filter>リソース ファイル</Filter>
+    </FxCompile>
+    <FxCompile Include="resources\shaders\CopyImage.VS.hlsl">
+      <Filter>リソース ファイル</Filter>
+    </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ソースファイル\engine\math\Matrix4x4Math.cpp">
@@ -89,6 +95,9 @@
     </ClCompile>
     <ClCompile Include="RtvManager.cpp">
       <Filter>ソース ファイル\engine\base</Filter>
+    </ClCompile>
+    <ClCompile Include="PostEffect.cpp">
+      <Filter>ソース ファイル\engine\graphics\PostEffect</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -182,6 +191,9 @@
     <ClInclude Include="RtvManager.h">
       <Filter>ヘッダー ファイル\engine\base</Filter>
     </ClInclude>
+    <ClInclude Include="PostEffect.h">
+      <Filter>ヘッダー ファイル\engine\graphics\PostEffect</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="ヘッダー ファイル">
@@ -265,12 +277,21 @@
     <Filter Include="ソース ファイル\engine\resource">
       <UniqueIdentifier>{d7f99d9d-f6a1-4260-8724-abe217996aa4}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ヘッダー ファイル\engine\graphics\PostEffect">
+      <UniqueIdentifier>{e3d84887-f7b9-4b1d-a2ed-1d9659bca63e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\engine\graphics\PostEffect">
+      <UniqueIdentifier>{3754bf21-2dd4-4de5-8ab9-e02820e2e74c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="resources\shaders\Object3d.hlsli">
       <Filter>リソース ファイル</Filter>
     </None>
     <None Include="resources\shaders\Particle.hlsli">
+      <Filter>リソース ファイル</Filter>
+    </None>
+    <None Include="resources\shaders\CopyImage.hlsli">
       <Filter>リソース ファイル</Filter>
     </None>
   </ItemGroup>

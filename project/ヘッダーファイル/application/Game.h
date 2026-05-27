@@ -9,6 +9,7 @@ class Object3dCommon;
 class Sprite;
 class Object3d;
 class ParticleEmitter;
+class PostEffect;
 
 
 
@@ -49,5 +50,7 @@ private:
 	ParticleEmitter* particleCircle = nullptr;
 
 	ParticleEmitter* particleChecker = nullptr;
+
+	PostEffect* postEffect = nullptr;
 
 };

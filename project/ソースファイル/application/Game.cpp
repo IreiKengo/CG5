@@ -18,6 +18,7 @@
 #include <filesystem>
 #include "SrvManager.h"
 #include "ImguiManager.h"
+#include "PostEffect.h"
 
 #pragma comment(lib,"Dbghelp.lib")
 
@@ -95,7 +96,7 @@ void Game::Initialize()
 	sprite = new Sprite();
 
 	std::string texturePath = "resources/uvChecker.png";
-	sprite->Initialize(spriteCommon, srvManager, texturePath);
+	sprite->Initialize(spriteCommon, texturePath);
 
 #pragma endregion
 
@@ -167,7 +168,9 @@ void Game::Initialize()
 
 #pragma endregion
 
+	postEffect = new PostEffect();
 
+	postEffect->Initialize(dxCommon, texturePath);
 
 }
 
@@ -179,6 +182,9 @@ void Game::Finalize()
 	particleChecker = nullptr;
 	particleCircle = nullptr;
 	ParticleManager::GetInstance()->Finalize();
+
+	delete postEffect;
+	postEffect = nullptr;
 
 	for (uint32_t i = 0; i < 2; ++i)
 	{
@@ -260,12 +266,12 @@ void Game::Draw()
 	//全てのObject3d個々の描画
 	for (uint32_t i = 0; i < 2; ++i)
 	{
-		object[0]->Draw();
+		object[i]->Draw();
 
 	}
 
 	//Spriteの描画基準。Spriteの描画の共通のグラッフィックスコマンドを積む
-	spriteCommon->ScreenCommon();
+	//spriteCommon->ScreenCommon();
 
 
 	//Spriteの描画
@@ -273,6 +279,8 @@ void Game::Draw()
 
 
 	//ParticleManager::GetInstance()->Draw();
+
+	postEffect->Draw();
 
 	imgui->End();    // ImGui終了
 	imgui->Draw();   // 描画

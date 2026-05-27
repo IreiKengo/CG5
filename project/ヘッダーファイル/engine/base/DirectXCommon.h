@@ -39,6 +39,13 @@ public:
 	const DXGI_FORMAT& GetRTVFormat()const { return rtvFormat_; }
 	SrvManager* GetSrvManager() { return &srvManager_; }
 	RtvManager* GetRtvManager() { return &rtvManager_; }
+	ID3D12Resource* GetRenderTextureResource() { return renderTextureResource.Get(); }
+	uint32_t GetRenderTextureSrvIndex() const { return renderTextureSrvIndex_; }
+	IDXGISwapChain4* GetSwapChain() const { return swapChain.Get(); }
+	D3D12_VIEWPORT GetViewport() const { return viewport; }
+	D3D12_RECT GetScissorRect() const { return scissorRect; }
+	ID3D12Resource* GetSwapChainResource(uint32_t index) const { return swapChainResources[index].Get(); }
+
 
 	//シェーダーのコンパイル
 	Microsoft::WRL::ComPtr<IDxcBlob> CompileShader(
@@ -84,11 +91,8 @@ private:
 	uint32_t descriptorSizeDSV;
 
 	
-	
 	//DSVのデスクリプターヒープ
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> dsvDescriptorHeap;
-
-	
 
 	//スワップチェーンリソース
 	std::array<Microsoft::WRL::ComPtr<ID3D12Resource>, 2> swapChainResources;
@@ -129,6 +133,7 @@ RtvManager rtvManager_;
 // RenderTexture用のリソースとSRVインデックス
 Microsoft::WRL::ComPtr<ID3D12Resource> renderTextureResource;
 uint32_t renderTextureSrvIndex_ = 0;
+uint32_t renderTextureRtvIndex_ = 0;
 
 
 //デバイスの初期化
