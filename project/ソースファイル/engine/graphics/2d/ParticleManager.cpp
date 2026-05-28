@@ -23,11 +23,11 @@ ParticleManager* ParticleManager::GetInstance()
 }
 
 
-void ParticleManager::Initialize(DirectXCommon* dxCommon, SrvManager* srvManager)
+void ParticleManager::Initialize(DirectXCommon* dxCommon)
 {
 
 	dxCommon_ = dxCommon;
-	srvManager_ = srvManager;
+	srvManager_ = dxCommon_->GetSrvManager();
 
 	std::random_device seedGenerator;
 	randomEngine_ = std::mt19937(seedGenerator());

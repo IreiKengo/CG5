@@ -16,7 +16,6 @@
 #include <strsafe.h>
 #include "D3DResourceLeakChecker.h"
 #include <filesystem>
-#include "SrvManager.h"
 #include "ImguiManager.h"
 #include "PostEffect.h"
 
@@ -85,7 +84,7 @@ void Game::Initialize()
 #pragma region スプライト関連
 
 	//テクスチャマネージャの初期化
-	TextureManager::GetInstance()->Initialize(dxCommon, srvManager);
+	TextureManager::GetInstance()->Initialize(dxCommon);
 	TextureManager::GetInstance()->LoadTexture("resources/uvChecker.png");
 
 	//スプライト共通部の初期化
@@ -101,7 +100,7 @@ void Game::Initialize()
 #pragma endregion
 
 #pragma region パーティクル
-	ParticleManager::GetInstance()->Initialize(dxCommon, srvManager);
+	ParticleManager::GetInstance()->Initialize(dxCommon);
 	ParticleManager::GetInstance()->SetCamera(camera);
 
 	ParticleManager::GetInstance()->CreateParticleGroup(
@@ -257,7 +256,7 @@ void Game::Draw()
 
 	//DirectXの描画基準。全ての描画に共通宇のグラッフィックスコマンドを積む
 	dxCommon->PreDraw();
-	srvManager->PreDraw();
+	
 
 	//3Dオブジェクトの描画準備。3Dオブジェクトの描画に共通のグラフィックスコマンドを積む
 	object3dCommon->ScreenCommon();

@@ -8,10 +8,10 @@ TextureManager* TextureManager::instance = nullptr;
 //ImGuiで0番目を使用するため、1番から使用
 //uint32_t TextureManager::kSRVIndexTop = 1;
 
-void TextureManager::Initialize(DirectXCommon* dxCommon, SrvManager* srvManager)
+void TextureManager::Initialize(DirectXCommon* dxCommon)
 {
 	dxCommon_ = dxCommon;
-	srvManager_ = srvManager;
+	srvManager_ = dxCommon_->GetSrvManager();
 
 	//SRVの数と同数
 	textureDatas.reserve(SrvManager::kMaxSRVCount);

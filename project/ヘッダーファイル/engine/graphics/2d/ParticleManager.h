@@ -100,7 +100,7 @@ public:
 		AABB area;//範囲
 	};
 
-	void Initialize(DirectXCommon* dxCommon, SrvManager* srvManager);
+	void Initialize(DirectXCommon* dxCommon);
 	void Update();
 	void Draw();
 

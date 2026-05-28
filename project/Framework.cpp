@@ -2,7 +2,6 @@
 #include "Input.h"
 #include "WinApp.h"
 #include "DirectXCommon.h"
-#include "SrvManager.h"
 #include "ImguiManager.h"
 #include "Sound.h"
 
@@ -40,15 +39,6 @@ void Framework::Initialize()
 	sound->Initialize("resources/fanfare.mp3");
 
 #pragma endregion
-
-#pragma region SRVマネージャー
-
-	//SRVマネージャーの初期化
-	srvManager = new SrvManager();
-	srvManager->Initialize(dxCommon);
-
-#pragma endregion
-
 
 #pragma region Imguiの初期化
 
@@ -109,8 +99,6 @@ void Framework::Finalize()
 	delete imgui;
 	imgui = nullptr;
 
-	delete srvManager;
-	srvManager = nullptr;
 
 	sound->SoundUnload();
 	sound->Finalize();
