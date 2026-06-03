@@ -163,7 +163,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
   <ItemGroup>
     <ClCompile Include="Framework.cpp" />
     <ClCompile Include="PostEffect.cpp" />
-    <ClCompile Include="RtvManager.cpp" />
+    <ClCompile Include="ソースファイル\engine\base\RtvManager.cpp" />
     <ClCompile Include="ソースファイル\engine\graphics\3d\Camera.cpp" />
     <ClCompile Include="ソースファイル\engine\debug\D3DResourceLeakChecker.cpp" />
     <ClCompile Include="ソースファイル\engine\base\DirectXCommon.cpp" />
@@ -200,7 +200,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </FxCompile>
-    <FxCompile Include="resources\shaders\CopyImage.VS.hlsl">
+    <FxCompile Include="resources\shaders\Fullscreen.VS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Development|x64'">Vertex</ShaderType>
@@ -238,7 +238,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
   <ItemGroup>
     <ClInclude Include="Framework.h" />
     <ClInclude Include="PostEffect.h" />
-    <ClInclude Include="RtvManager.h" />
+    <ClInclude Include="ヘッダーファイル\engine\base\RtvManager.h" />
     <ClInclude Include="ヘッダーファイル\engine\graphics\3d\Camera.h" />
     <ClInclude Include="ヘッダーファイル\engine\debug\D3DResourceLeakChecker.h" />
     <ClInclude Include="ヘッダーファイル\engine\base\DirectXCommon.h" />
@@ -274,7 +274,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <None Include="resources\shaders\CopyImage.hlsli" />
+    <None Include="resources\shaders\Fullscreen.hlsli" />
     <None Include="resources\shaders\Object3d.hlsli">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Development|x64'">
       </ExcludedFromBuild>

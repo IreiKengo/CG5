@@ -16,7 +16,7 @@
     <FxCompile Include="resources\shaders\CopyImage.PS.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
-    <FxCompile Include="resources\shaders\CopyImage.VS.hlsl">
+    <FxCompile Include="resources\shaders\Fullscreen.VS.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
   </ItemGroup>
@@ -93,7 +93,7 @@
     <ClCompile Include="Framework.cpp">
       <Filter>ソース ファイル\engine\base</Filter>
     </ClCompile>
-    <ClCompile Include="RtvManager.cpp">
+    <ClCompile Include="ソースファイル\engine\base\RtvManager.cpp">
       <Filter>ソース ファイル\engine\base</Filter>
     </ClCompile>
     <ClCompile Include="PostEffect.cpp">
@@ -188,7 +188,7 @@
     <ClInclude Include="Framework.h">
       <Filter>ヘッダー ファイル\engine\base</Filter>
     </ClInclude>
-    <ClInclude Include="RtvManager.h">
+    <ClInclude Include="ヘッダーファイル\engine\base\RtvManager.h">
       <Filter>ヘッダー ファイル\engine\base</Filter>
     </ClInclude>
     <ClInclude Include="PostEffect.h">
@@ -291,7 +291,7 @@
     <None Include="resources\shaders\Particle.hlsli">
       <Filter>リソース ファイル</Filter>
     </None>
-    <None Include="resources\shaders\CopyImage.hlsli">
+    <None Include="resources\shaders\Fullscreen.hlsli">
       <Filter>リソース ファイル</Filter>
     </None>
   </ItemGroup>

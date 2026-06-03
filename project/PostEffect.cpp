@@ -173,7 +173,7 @@ void PostEffect::CreateGraphicsPipeline()
 	rasterizerDesc.FillMode = D3D12_FILL_MODE_SOLID;
 
 	//Shaderをコンパイルする
-	Microsoft::WRL::ComPtr<IDxcBlob> vertexShaderBlob = dxCommon_->CompileShader(L"resources/shaders/CopyImage.VS.hlsl",
+	Microsoft::WRL::ComPtr<IDxcBlob> vertexShaderBlob = dxCommon_->CompileShader(L"resources/shaders/Fullscreen.VS.hlsl",
 		L"vs_6_0");
 	assert(vertexShaderBlob != nullptr);
 
