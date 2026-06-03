@@ -21,7 +21,7 @@ void PostEffect::Initialize(DirectXCommon* dxCommon,std::string textureFilePath)
 
 	CreateGraphicsPipeline();
 
-	textureIndex = TextureManager::GetInstance()->GetTextureIndexByFilePath(textureFilePath);
+	//textureIndex = TextureManager::GetInstance()->GetTextureIndexByFilePath(textureFilePath);
 
 }
 
@@ -73,6 +73,11 @@ void PostEffect::Draw()
 	dxCommon_->GetCommandList()->DrawInstanced(3, 1, 0, 0);
 
 
+	barrier = {};
+	barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+	barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+	barrier.Transition.pResource = dxCommon_->GetRenderTextureResource();
+	barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
 	barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 	barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
 	dxCommon_->GetCommandList()->ResourceBarrier(1, &barrier);
