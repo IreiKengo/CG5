@@ -19,6 +19,9 @@
     <FxCompile Include="resources\shaders\Fullscreen.VS.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
+    <FxCompile Include="resources\shaders\Grayscale.PS.hlsl">
+      <Filter>リソース ファイル</Filter>
+    </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ソースファイル\engine\math\Matrix4x4Math.cpp">
@@ -96,7 +99,7 @@
     <ClCompile Include="ソースファイル\engine\base\RtvManager.cpp">
       <Filter>ソース ファイル\engine\base</Filter>
     </ClCompile>
-    <ClCompile Include="PostEffect.cpp">
+    <ClCompile Include="ソースファイル\engine\graphics\postEffect\PostEffect.cpp">
       <Filter>ソース ファイル\engine\graphics\PostEffect</Filter>
     </ClCompile>
   </ItemGroup>
@@ -191,7 +194,7 @@
     <ClInclude Include="ヘッダーファイル\engine\base\RtvManager.h">
       <Filter>ヘッダー ファイル\engine\base</Filter>
     </ClInclude>
-    <ClInclude Include="PostEffect.h">
+    <ClInclude Include="ヘッダーファイル\engine\graphics\postEffect\PostEffect.h">
       <Filter>ヘッダー ファイル\engine\graphics\PostEffect</Filter>
     </ClInclude>
   </ItemGroup>
