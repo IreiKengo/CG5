@@ -21,7 +21,7 @@ void PostEffect::Initialize(DirectXCommon* dxCommon,std::string textureFilePath)
 
 	CreateGraphicsPipeline();
 
-	//textureIndex = TextureManager::GetInstance()->GetTextureIndexByFilePath(textureFilePath);
+	
 
 }
 

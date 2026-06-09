@@ -24,8 +24,7 @@ private:
 	DirectXCommon* dxCommon_ = nullptr;
 	SrvManager* srvManager_ = nullptr;
 	RtvManager* rtvManager_ = nullptr;
-	uint32_t textureIndex = 0;
-
+	
 	//ルートシグネチャの作成
 	void CreateRootSignature();
 	//グラフィックスパイプラインの作成

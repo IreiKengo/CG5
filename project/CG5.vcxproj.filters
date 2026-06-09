@@ -13,9 +13,6 @@
     <FxCompile Include="resources\shaders\Particle.PS.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
-    <FxCompile Include="resources\shaders\CopyImage.PS.hlsl">
-      <Filter>リソース ファイル</Filter>
-    </FxCompile>
     <FxCompile Include="resources\shaders\Fullscreen.VS.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
