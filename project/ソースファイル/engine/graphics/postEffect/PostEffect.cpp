@@ -6,6 +6,7 @@
 #include "DirectXCommon.h"
 #include "SrvManager.h"
 #include <TextureManager.h>
+#include "ImguiManager.h"
 
 
 
@@ -18,6 +19,13 @@ void PostEffect::Initialize(DirectXCommon* dxCommon,std::string textureFilePath)
 
 	srvManager_ = dxCommon_->GetSrvManager();
 	rtvManager_ = dxCommon_->GetRtvManager();
+
+	vignetteResource = dxCommon_->CreateBufferResource(sizeof(Vignette));
+
+	vignetteResource->Map(0, nullptr,reinterpret_cast<void**>(&vignetteData));
+
+	vignetteData->scale = 16.0f;
+	vignetteData->power = 0.8f;
 
 	CreateGraphicsPipeline();
 
@@ -68,7 +76,7 @@ void PostEffect::Draw()
 	dxCommon_->GetCommandList()->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	srvManager_->SetGraphicsRootDescriptorTable(0, dxCommon_->GetRenderTextureSrvIndex());
-
+	dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(1, vignetteResource->GetGPUVirtualAddress());
 	//頂点3つ描画
 	dxCommon_->GetCommandList()->DrawInstanced(3, 1, 0, 0);
 
@@ -81,6 +89,20 @@ void PostEffect::Draw()
 	barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 	barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
 	dxCommon_->GetCommandList()->ResourceBarrier(1, &barrier);
+
+}
+
+void PostEffect::DebugUpdate()
+{
+
+#ifdef USE_IMGUI
+	ImGui::Begin("VignetteSettings");
+	ImGui::DragFloat("Scale", &vignetteData->scale, 0.1f);
+	ImGui::DragFloat("Power", &vignetteData->power, 0.01f);
+	ImGui::End();
+
+
+#endif 
 
 }
 
@@ -111,16 +133,20 @@ void PostEffect::CreateRootSignature()
 	staticSamplers[0].MaxLOD = D3D12_FLOAT32_MAX;//ありったけのMipmapを使う
 	staticSamplers[0].ShaderRegister = 0;//レジスタ番号0を使う
 	staticSamplers[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;//PixelShaderを使う
+
 	descriptionRootSignature.pStaticSamplers = staticSamplers;
 	descriptionRootSignature.NumStaticSamplers = _countof(staticSamplers);
 
 
 	//RootParameter作成。複数設定できるので配列。PixelShaderのMaterialとVertexShaderのTransform
-	D3D12_ROOT_PARAMETER rootParameters[1] = {};
+	D3D12_ROOT_PARAMETER rootParameters[2] = {};
 	rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
 	rootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;//Pixelを使う
 	rootParameters[0].DescriptorTable.NumDescriptorRanges = _countof(descriptorRange);
 	rootParameters[0].DescriptorTable.pDescriptorRanges = descriptorRange;
+	rootParameters[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;//CBVを使う
+	rootParameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;//PixelShdaderで使う
+	rootParameters[1].Descriptor.ShaderRegister = 0;//レジスタ番号1を使う
 	
 
 	descriptionRootSignature.pParameters = rootParameters;//ルートパラメータ配列へのポインタ

@@ -55,10 +55,10 @@
       <Filter>ソース ファイル\engine\graphics\3d</Filter>
     </ClCompile>
     <ClCompile Include="ソースファイル\application\Game.cpp">
-      <Filter>ソース ファイル\application</Filter>
+      <Filter>ソース ファイル\engine\application</Filter>
     </ClCompile>
     <ClCompile Include="ソースファイル\application\main.cpp">
-      <Filter>ソース ファイル\application</Filter>
+      <Filter>ソース ファイル\engine\application</Filter>
     </ClCompile>
     <ClCompile Include="ソースファイル\engine\resource\ModelManager.cpp">
       <Filter>ソース ファイル\engine\resource</Filter>
@@ -217,9 +217,6 @@
     <Filter Include="ソース ファイル\engine\audio">
       <UniqueIdentifier>{730c93a2-c596-4ceb-91c5-7c1ed77111e4}</UniqueIdentifier>
     </Filter>
-    <Filter Include="ソース ファイル\application">
-      <UniqueIdentifier>{905ffaad-e359-4a29-83ab-6250d8518a87}</UniqueIdentifier>
-    </Filter>
     <Filter Include="ヘッダー ファイル\engine">
       <UniqueIdentifier>{ccd228e6-4962-49cb-b6e4-8e9ac28b55a9}</UniqueIdentifier>
     </Filter>
@@ -285,6 +282,9 @@
     </Filter>
     <Filter Include="ソース ファイル\engine\graphics\PostEffect">
       <UniqueIdentifier>{3754bf21-2dd4-4de5-8ab9-e02820e2e74c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\engine\application">
+      <UniqueIdentifier>{905ffaad-e359-4a29-83ab-6250d8518a87}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

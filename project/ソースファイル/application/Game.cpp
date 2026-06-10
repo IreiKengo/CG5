@@ -228,6 +228,8 @@ void Game::Update()
 
 	sprite->DebugUpdate();
 
+	postEffect->DebugUpdate();
+
 	//カメラの更新
 	camera->Update();
 
