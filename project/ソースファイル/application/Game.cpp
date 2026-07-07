@@ -226,7 +226,7 @@ void Game::Update()
 
 	camera->DebugUpdate();
 
-	sprite->DebugUpdate();
+	//sprite->DebugUpdate();
 
 	postEffect->DebugUpdate();
 

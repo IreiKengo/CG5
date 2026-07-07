@@ -22,6 +22,9 @@
     <FxCompile Include="resources\shaders\Vignette.PS.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
+    <FxCompile Include="resources\shaders\BoxFilter.PS.hlsl">
+      <Filter>リソース ファイル</Filter>
+    </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ソースファイル\engine\math\Matrix4x4Math.cpp">
