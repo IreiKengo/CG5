@@ -27,6 +27,12 @@ void PostEffect::Initialize(DirectXCommon* dxCommon,std::string textureFilePath)
 	vignetteData->scale = 16.0f;
 	vignetteData->power = 0.8f;
 
+	gaussianResource = dxCommon_->CreateBufferResource(sizeof(GaussianFilter));
+	gaussianResource->Map(0, nullptr, reinterpret_cast<void**>(&gaussianData));
+
+	gaussianData->kernel = 7;
+	gaussianData->sigma = 2.0f;
+
 	CreateGraphicsPipeline();
 
 	
@@ -72,11 +78,23 @@ void PostEffect::Draw()
 	srvManager_->PreDraw();
 
 	dxCommon_->GetCommandList()->SetGraphicsRootSignature(rootSignature_.Get());
-	dxCommon_->GetCommandList()->SetPipelineState(graphicsPipelineState_.Get());
+	dxCommon_->GetCommandList()->SetPipelineState(graphicsPipelineStates_[static_cast<size_t>(currentEffect_)].Get());
 	dxCommon_->GetCommandList()->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	srvManager_->SetGraphicsRootDescriptorTable(0, dxCommon_->GetRenderTextureSrvIndex());
-	dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(1, vignetteResource->GetGPUVirtualAddress());
+	
+	if (currentEffect_ == EffectType::Vignetting)
+	{
+		dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(1, vignetteResource->GetGPUVirtualAddress());
+	} else if (currentEffect_ == EffectType::Gaussian)
+	{
+		dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(1, gaussianResource->GetGPUVirtualAddress());
+	} else
+	{
+		// グレースケールやボックスフィルタなど、まだバッファがないものは一旦ガウシアン等をダミーで送っておく（エラー防止）
+		dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(1, gaussianResource->GetGPUVirtualAddress());
+	}
+
 	//頂点3つ描画
 	dxCommon_->GetCommandList()->DrawInstanced(3, 1, 0, 0);
 
@@ -96,11 +114,33 @@ void PostEffect::DebugUpdate()
 {
 
 #ifdef USE_IMGUI
-	ImGui::Begin("VignetteSettings");
-	ImGui::DragFloat("Scale", &vignetteData->scale, 0.1f);
-	ImGui::DragFloat("Power", &vignetteData->power, 0.01f);
-	ImGui::End();
 
+	const char* effectNames[] = { "Grayscale","Vignette","Smoothing","Gaussian" };
+	int currentItem = static_cast<int>(currentEffect_);
+
+	ImGui::Begin("PostEffectSettings");
+	if (ImGui::Combo("Effect", &currentItem, effectNames, IM_ARRAYSIZE(effectNames))) {
+		currentEffect_ = static_cast<EffectType>(currentItem);
+	}
+
+	if (currentEffect_ == EffectType::Vignetting) 
+	{
+		ImGui::DragFloat("Scale", &vignetteData->scale, 0.1f);
+		ImGui::DragFloat("Power", &vignetteData->power, 0.01f);
+	}  else if (currentEffect_ == EffectType::Gaussian)
+	{
+		int kernelSize = static_cast<int>(gaussianData->kernel);
+		if (ImGui::SliderInt("kernel", &kernelSize, 3, 7))
+		{
+			if (kernelSize % 2 == 0) {
+				kernelSize += 1;
+			}
+		}
+		ImGui::DragFloat("sigma", &gaussianData->sigma, 0.1f);
+		gaussianData->kernel = static_cast<uint32_t>(kernelSize);
+	}
+
+	ImGui::End();
 
 #endif 
 
@@ -203,11 +243,7 @@ void PostEffect::CreateGraphicsPipeline()
 		L"vs_6_0");
 	assert(vertexShaderBlob != nullptr);
 
-	Microsoft::WRL::ComPtr<IDxcBlob> pixelShaderBlob = dxCommon_->CompileShader(L"resources/shaders/BoxFilter.PS.hlsl",
-		L"ps_6_0");
-	assert(pixelShaderBlob != nullptr);
-
-
+	
 
 	//DepthStencilStateの設定
 	D3D12_DEPTH_STENCIL_DESC depthStencilDesc{};
@@ -225,8 +261,7 @@ void PostEffect::CreateGraphicsPipeline()
 	graphicsPipelineStateDesc.InputLayout = inputLayoutDesc;//InputLayout
 	graphicsPipelineStateDesc.VS = { vertexShaderBlob->GetBufferPointer(),
 	vertexShaderBlob->GetBufferSize() };//VertexShader
-	graphicsPipelineStateDesc.PS = { pixelShaderBlob->GetBufferPointer(),
-	pixelShaderBlob->GetBufferSize() };//PixelShader
+	
 	graphicsPipelineStateDesc.BlendState = blendDesc;//BlendState
 	graphicsPipelineStateDesc.RasterizerState = rasterizerDesc;//RasterizerState
 	//書き込むRTVの情報
@@ -245,8 +280,27 @@ void PostEffect::CreateGraphicsPipeline()
 
 	HRESULT hr;
 
-	//実際に生成
-	hr = dxCommon_->GetDevice()->CreateGraphicsPipelineState(&graphicsPipelineStateDesc,
-		IID_PPV_ARGS(&graphicsPipelineState_));
+	std::wstring psPaths[static_cast<size_t>(EffectType::Count)] = {
+		L"resources/shaders/Grayscale.PS.hlsl",
+		L"resources/shaders/Vignette.PS.hlsl",
+		L"resources/shaders/BoxFilter.PS.hlsl",
+		L"resources/shaders/GaussianFilter.PS.hlsl",
+	};
+
+	for (size_t i = 0; i < static_cast<size_t>(EffectType::Count);i++)
+	{
+		Microsoft::WRL::ComPtr<IDxcBlob> pixelShaderBlob = dxCommon_->CompileShader(psPaths[i].c_str(),
+			L"ps_6_0");
+		assert(pixelShaderBlob != nullptr);
+
+		graphicsPipelineStateDesc.PS = { pixelShaderBlob->GetBufferPointer(),
+		pixelShaderBlob->GetBufferSize() };//PixelShader
+
+		//実際に生成
+		hr = dxCommon_->GetDevice()->CreateGraphicsPipelineState(&graphicsPipelineStateDesc,
+			IID_PPV_ARGS(&graphicsPipelineStates_[i]));
+	}
+
+	
 
 }
