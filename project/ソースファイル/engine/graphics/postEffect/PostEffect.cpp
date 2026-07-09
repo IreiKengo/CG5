@@ -115,7 +115,7 @@ void PostEffect::DebugUpdate()
 
 #ifdef USE_IMGUI
 
-	const char* effectNames[] = { "Grayscale","Vignette","Smoothing","Gaussian" };
+	const char* effectNames[] = { "Grayscale","Vignette","Smoothing","Gaussian","LuminanceBasedOutline"};
 	int currentItem = static_cast<int>(currentEffect_);
 
 	ImGui::Begin("PostEffectSettings");
@@ -285,6 +285,7 @@ void PostEffect::CreateGraphicsPipeline()
 		L"resources/shaders/Vignette.PS.hlsl",
 		L"resources/shaders/BoxFilter.PS.hlsl",
 		L"resources/shaders/GaussianFilter.PS.hlsl",
+		L"resources/shaders/LuminanceBasedOutline.PS.hlsl",
 	};
 
 	for (size_t i = 0; i < static_cast<size_t>(EffectType::Count);i++)

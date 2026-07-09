@@ -16,6 +16,7 @@ public:
 		Vignetting,
 		Smoothing,
 		Gaussian,
+		LuminanceBasedOutline,
 
 		Count//エフェクトの総数
 	};

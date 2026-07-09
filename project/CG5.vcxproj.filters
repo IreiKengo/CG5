@@ -28,6 +28,9 @@
     <FxCompile Include="resources\shaders\GaussianFilter.PS.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
+    <FxCompile Include="resources\shaders\LuminanceBasedOutline.PS.hlsl">
+      <Filter>リソース ファイル</Filter>
+    </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ソースファイル\engine\math\Matrix4x4Math.cpp">
