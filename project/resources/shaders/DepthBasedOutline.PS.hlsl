@@ -21,7 +21,7 @@ Texture2D<float32_t4> gTexture : register(t0);
 SamplerState gSampler : register(s0);
 ConstantBuffer<Outline> gDepthBasedOutline : register(b0);
 
-Texture2D<float32_t> gDegthTexture : register(t1);
+Texture2D<float32_t> gDepthTexture : register(t1);
 SamplerState gSamplerPoint : register(s1);
 ConstantBuffer<Material> gMaterial : register(b1);
 
@@ -73,7 +73,7 @@ PixelShaderOutput main(VertexShaderOutput input)
         {
             //現在のtexcoordを算出
             float32_t2 texcoord = input.texcoord + kIndex3x3[x][y] * uvStepSize;
-            float32_t ndcDepth = gDegthTexture.Sample(gSamplerPoint, texcoord);
+            float32_t ndcDepth = gDepthTexture.Sample(gSamplerPoint, texcoord);
             float32_t4 viewSpace = mul(float32_t4(0.0f, 0.0f, ndcDepth, 1.0f), gMaterial.projectionInverse);
             float32_t viewZ = viewSpace.z * rcp(viewSpace.w);//同時座標系からデカルト座標系へ変換
             difference.x += viewZ * kPrewittHorizontalKernel[x][y];

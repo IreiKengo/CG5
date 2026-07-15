@@ -51,6 +51,12 @@ void PostEffect::Initialize(DirectXCommon* dxCommon, std::string textureFilePath
 
 	materialData->projectionInverse = Inverse(camera_->GetProjectionMatrix());
 
+	radialBlurResource = dxCommon_->CreateBufferResource(sizeof(RadialBlur));
+	radialBlurResource->Map(0, nullptr, reinterpret_cast<void**>(&radialBlurData));
+
+	radialBlurData->center = { 0.5f,0.5f };
+	radialBlurData->blurWidth = 0.01f;
+
 	CreateGraphicsPipeline();
 
 
@@ -121,7 +127,7 @@ void PostEffect::Draw()
 
 	if (currentEffect_ == EffectType::kDepthBasedOutline)
 	{
-		srvManager_->SetGraphicsRootDescriptorTable(1, dxCommon_->GetRenderTextureSrvIndex());
+		srvManager_->SetGraphicsRootDescriptorTable(1, dxCommon_->GetDepthBufferSrvIndex());
 	}
 
 	if (currentEffect_ == EffectType::kVignetting)
@@ -138,8 +144,10 @@ void PostEffect::Draw()
 		dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(2, depthOutlineResource->GetGPUVirtualAddress());
 		dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(3, materialResource->GetGPUVirtualAddress());
 
-	} else
+	} else if (currentEffect_ == EffectType::kRadialBlur)
 	{
+		dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(2, radialBlurResource->GetGPUVirtualAddress());
+	}else{
 		dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(2, vignetteResource->GetGPUVirtualAddress());
 	}
 
@@ -183,7 +191,7 @@ void PostEffect::DebugUpdate()
 
 	materialData->projectionInverse = Inverse(camera_->GetProjectionMatrix());
 
-	const char* effectNames[] = { "Grayscale","Vignette","Smoothing","Gaussian","LuminanceBasedOutline","DepthBasedOutline" };
+	const char* effectNames[] = { "Grayscale","Vignette","Smoothing","Gaussian","LuminanceBasedOutline","DepthBasedOutline","RadialBlur"};
 	int currentItem = static_cast<int>(currentEffect_);
 
 	ImGui::Begin("PostEffectSettings");
@@ -212,6 +220,10 @@ void PostEffect::DebugUpdate()
 	} else if (currentEffect_ == EffectType::kDepthBasedOutline)
 	{
 		ImGui::DragFloat("edgeWeight", &depthOutlineData->edgeWeight, 0.1f, 0.0f, 10.0f);
+	} else if (currentEffect_ == EffectType::kRadialBlur)
+	{
+		ImGui::DragFloat2("center", &radialBlurData->center.x, 0.1f);
+		ImGui::DragFloat("blurWidth", &radialBlurData->blurWidth, 0.01f, 0.0f, 10.0f);
 	}
 
 	ImGui::End();
@@ -388,6 +400,7 @@ void PostEffect::CreateGraphicsPipeline()
 		L"resources/shaders/GaussianFilter.PS.hlsl",
 		L"resources/shaders/LuminanceBasedOutline.PS.hlsl",
 		L"resources/shaders/DepthBasedOutline.PS.hlsl",
+		L"resources/shaders/RadialBlur.PS.hlsl",
 	};
 
 	for (size_t i = 0; i < static_cast<size_t>(EffectType::Count); i++)

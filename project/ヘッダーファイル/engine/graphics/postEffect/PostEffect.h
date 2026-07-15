@@ -3,6 +3,7 @@
 #include <wrl.h>
 #include <string>
 #include "Matrix4x4.h"
+#include "Vector2.h"
 
 class DirectXCommon;
 class SrvManager;
@@ -20,6 +21,7 @@ public:
 		kGaussian,
 		kLumBasedOutline,
 		kDepthBasedOutline,
+		kRadialBlur,
 
 		Count//エフェクトの総数
 	};
@@ -47,6 +49,12 @@ public:
 	struct Material
 	{
 		Matrix4x4 projectionInverse;
+	};
+
+	struct RadialBlur
+	{
+		Vector2 center;
+		float blurWidth;
 	};
 
 	void Initialize(DirectXCommon* dxCommon,std::string textureFilePath,Camera*camera);
@@ -87,6 +95,11 @@ private:
 	Microsoft::WRL::ComPtr<ID3D12Resource> materialResource;
 	// バッファリソース内のデータを指すポインタ
 	Material* materialData = nullptr;
+
+	// バッファリソース
+	Microsoft::WRL::ComPtr<ID3D12Resource> radialBlurResource;
+	// バッファリソース内のデータを指すポインタ
+	RadialBlur* radialBlurData = nullptr;
 
 	DirectXCommon* dxCommon_ = nullptr;
 	SrvManager* srvManager_ = nullptr;
