@@ -141,6 +141,7 @@ void Game::Initialize()
 	ModelManager::GetInstance()->LoadModel("multiMesh.obj");
 	ModelManager::GetInstance()->LoadModel("multiMaterial.obj");
 	ModelManager::GetInstance()->LoadModel("axis.obj");
+	ModelManager::GetInstance()->LoadModel("terrain.obj");
 
 	//3Dオブジェクト共通部の初期化
 	object3dCommon = new Object3dCommon;
@@ -154,10 +155,10 @@ void Game::Initialize()
 
 		std::string modelPath;
 		if (i % 2 == 0) {
-			modelPath = "plane.obj";
+			modelPath = "axis.obj";
 		} else {
 
-			modelPath = "axis.obj";
+			modelPath = "terrain.obj";
 		}
 
 		object[i]->Initialize(object3dCommon);
@@ -169,7 +170,7 @@ void Game::Initialize()
 
 	postEffect = new PostEffect();
 
-	postEffect->Initialize(dxCommon, texturePath);
+	postEffect->Initialize(dxCommon, texturePath,camera);
 
 }
 

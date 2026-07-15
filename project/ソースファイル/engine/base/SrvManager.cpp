@@ -33,8 +33,6 @@ uint32_t SrvManager::Allocate()
 	//上で記録した番号をreturn
 	return  index;
 
-
-
 }
 
 D3D12_CPU_DESCRIPTOR_HANDLE SrvManager::GetCPUDescriptorHandle(uint32_t index)

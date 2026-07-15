@@ -32,7 +32,7 @@ void Object3d::Initialize(Object3dCommon* object3dCommon)
 void Object3d::Update()
 {
 
-	transform.rotate.y += 0.03f;
+	//transform.rotate.y += 0.03f;
 	
 	Matrix4x4 worldMatrix = MakeAffineMatrix(transform.scale, transform.rotate, transform.translate);
 	Matrix4x4 worldViewProjectionMatrix;

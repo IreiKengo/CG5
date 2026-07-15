@@ -43,13 +43,12 @@ void DirectXCommon::Initialize(WinApp* winApp)
 	InitializeSwapChain();
 	//深度バッファの生成
 	CreateDepthStencilTextureResource();
-	//各種デスクリプターヒープの生成
-	CreateDescriptorHeaps();
 
 	srvManager_.Initialize(this);
 	rtvManager_.Initialize(this);
 
-
+	//各種デスクリプターヒープの生成
+	CreateDescriptorHeaps();
 	//レンダーターゲットビューの初期化
 	InitializeRenderTargetView();
 	//深度ステンシルビューの初期化
@@ -327,7 +326,7 @@ void DirectXCommon::CreateDepthStencilTextureResource()
 	resourceDesc.Height = WinApp::kClientHeight;//Textureの高さ
 	resourceDesc.MipLevels = 1;// mipmapの数
 	resourceDesc.DepthOrArraySize = 1; //奥行き or 配列Textureの配列数
-	resourceDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;//DepthStencilとして利用可能なフォーマット
+	resourceDesc.Format = DXGI_FORMAT_R24G8_TYPELESS;//DepthStencilとして利用可能なフォーマット
 	resourceDesc.SampleDesc.Count = 1;//サンプリングカウント。1固定
 	resourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;//2次元
 	resourceDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;//DepthStencilとして使う通知
@@ -362,11 +361,17 @@ void DirectXCommon::CreateDescriptorHeaps()
 
 	//DescriptorSizeを取得しておく
 	descriptorSizeDSV = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
-
-
 	//ディスクリプタヒープの生成
 	//DSV用のヒープでディスクリプタの数は1。DSVはShader内で触れるものではないので、ShaderVisibleはfalse
 	dsvDescriptorHeap = CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 1, false);
+
+	//深度用SRV
+	depthBufferSrvIndex_ = srvManager_.Allocate();
+	srvManager_.CreateSRVforTexture2D(
+		depthBufferSrvIndex_,
+		depthResource.Get(),
+		DXGI_FORMAT_R24_UNORM_X8_TYPELESS,
+		1);
 
 }
 
@@ -465,14 +470,8 @@ void DirectXCommon::CreateDXCCompiler()
 
 void DirectXCommon::InitializeFixFPS()
 {
-
-	
-
 	//現在時間を記録する
 	reference_ = std::chrono::steady_clock::now();
-
-	
-
 }
 
 void DirectXCommon::UpdateFixFPS()

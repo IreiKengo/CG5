@@ -45,7 +45,8 @@ public:
 	D3D12_VIEWPORT GetViewport() const { return viewport; }
 	D3D12_RECT GetScissorRect() const { return scissorRect; }
 	ID3D12Resource* GetSwapChainResource(uint32_t index) const { return swapChainResources[index].Get(); }
-
+	uint32_t GetDepthBufferSrvIndex()const {return depthBufferSrvIndex_; }
+	ID3D12Resource* GetDepthResource() const { return depthResource.Get(); }
 
 	//シェーダーのコンパイル
 	Microsoft::WRL::ComPtr<IDxcBlob> CompileShader(
@@ -134,6 +135,9 @@ RtvManager rtvManager_;
 Microsoft::WRL::ComPtr<ID3D12Resource> renderTextureResource;
 uint32_t renderTextureSrvIndex_ = 0;
 uint32_t renderTextureRtvIndex_ = 0;
+
+//Depth用のSRVIndex
+uint32_t depthBufferSrvIndex_ = 0;
 
 
 //デバイスの初期化

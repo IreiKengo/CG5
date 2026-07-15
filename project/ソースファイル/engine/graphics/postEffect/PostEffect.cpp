@@ -7,22 +7,25 @@
 #include "SrvManager.h"
 #include <TextureManager.h>
 #include "ImguiManager.h"
-
+#include "Matrix4x4Math.h"
+#include "Camera.h"
 
 
 using namespace StringUtility;
 using namespace Logger;
+using namespace math;
 
-void PostEffect::Initialize(DirectXCommon* dxCommon,std::string textureFilePath)
+void PostEffect::Initialize(DirectXCommon* dxCommon, std::string textureFilePath, Camera* camera)
 {
 	dxCommon_ = dxCommon;
+	camera_ = camera;
 
 	srvManager_ = dxCommon_->GetSrvManager();
 	rtvManager_ = dxCommon_->GetRtvManager();
 
 	vignetteResource = dxCommon_->CreateBufferResource(sizeof(Vignette));
 
-	vignetteResource->Map(0, nullptr,reinterpret_cast<void**>(&vignetteData));
+	vignetteResource->Map(0, nullptr, reinterpret_cast<void**>(&vignetteData));
 
 	vignetteData->scale = 16.0f;
 	vignetteData->power = 0.8f;
@@ -33,22 +36,54 @@ void PostEffect::Initialize(DirectXCommon* dxCommon,std::string textureFilePath)
 	gaussianData->kernel = 7;
 	gaussianData->sigma = 2.0f;
 
+	lumOutlineResource = dxCommon_->CreateBufferResource(sizeof(Outline));
+	lumOutlineResource->Map(0, nullptr, reinterpret_cast<void**>(&lumOutlineData));
+
+	lumOutlineData->edgeWeight = 6.0f;
+
+	depthOutlineResource = dxCommon_->CreateBufferResource(sizeof(Outline));
+	depthOutlineResource->Map(0, nullptr, reinterpret_cast<void**>(&depthOutlineData));
+
+	depthOutlineData->edgeWeight = 6.0f;
+
+	materialResource = dxCommon_->CreateBufferResource(sizeof(Material));
+	materialResource->Map(0, nullptr, reinterpret_cast<void**>(&materialData));
+
+	materialData->projectionInverse = Inverse(camera_->GetProjectionMatrix());
+
 	CreateGraphicsPipeline();
 
-	
+
 
 }
 
 void PostEffect::Draw()
 {
-	D3D12_RESOURCE_BARRIER barrier{};
-	barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-	barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-	barrier.Transition.pResource = dxCommon_->GetRenderTextureResource();
-	barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-	barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
-	barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-	dxCommon_->GetCommandList()->ResourceBarrier(1, &barrier);
+	D3D12_RESOURCE_BARRIER barriers[2] = {};
+	UINT barrierCount = 0;
+
+	//カラー
+	barriers[barrierCount].Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+	barriers[barrierCount].Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+	barriers[barrierCount].Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+	barriers[barrierCount].Transition.pResource = dxCommon_->GetRenderTextureResource();
+	barriers[barrierCount].Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
+	barriers[barrierCount].Transition.StateAfter = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+	barrierCount++;
+
+	//深度バッファ
+	if (currentEffect_ == EffectType::kDepthBasedOutline)
+	{
+		barriers[barrierCount].Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+		barriers[barrierCount].Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+		barriers[barrierCount].Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+		barriers[barrierCount].Transition.pResource = dxCommon_->GetDepthResource();
+		barriers[barrierCount].Transition.StateBefore = D3D12_RESOURCE_STATE_DEPTH_WRITE;
+		barriers[barrierCount].Transition.StateAfter = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+		barrierCount++;
+	}
+
+	dxCommon_->GetCommandList()->ResourceBarrier(barrierCount, barriers);
 
 	UINT backBufferIndex = dxCommon_->GetSwapChain()->GetCurrentBackBufferIndex();
 	D3D12_CPU_DESCRIPTOR_HANDLE swapChainHandle = rtvManager_->GetSwapChainHandle(backBufferIndex);
@@ -81,32 +116,63 @@ void PostEffect::Draw()
 	dxCommon_->GetCommandList()->SetPipelineState(graphicsPipelineStates_[static_cast<size_t>(currentEffect_)].Get());
 	dxCommon_->GetCommandList()->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
+
 	srvManager_->SetGraphicsRootDescriptorTable(0, dxCommon_->GetRenderTextureSrvIndex());
-	
-	if (currentEffect_ == EffectType::Vignetting)
+
+	if (currentEffect_ == EffectType::kDepthBasedOutline)
 	{
-		dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(1, vignetteResource->GetGPUVirtualAddress());
-	} else if (currentEffect_ == EffectType::Gaussian)
+		srvManager_->SetGraphicsRootDescriptorTable(1, dxCommon_->GetRenderTextureSrvIndex());
+	}
+
+	if (currentEffect_ == EffectType::kVignetting)
 	{
-		dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(1, gaussianResource->GetGPUVirtualAddress());
+		dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(2, vignetteResource->GetGPUVirtualAddress());
+	} else if (currentEffect_ == EffectType::kGaussian)
+	{
+		dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(2, gaussianResource->GetGPUVirtualAddress());
+	} else if (currentEffect_ == EffectType::kLumBasedOutline)
+	{
+		dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(2, lumOutlineResource->GetGPUVirtualAddress());
+	} else if (currentEffect_ == EffectType::kDepthBasedOutline)
+	{
+		dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(2, depthOutlineResource->GetGPUVirtualAddress());
+		dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(3, materialResource->GetGPUVirtualAddress());
+
 	} else
 	{
-		// グレースケールやボックスフィルタなど、まだバッファがないものは一旦ガウシアン等をダミーで送っておく（エラー防止）
-		dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(1, gaussianResource->GetGPUVirtualAddress());
+		dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(2, vignetteResource->GetGPUVirtualAddress());
 	}
 
 	//頂点3つ描画
 	dxCommon_->GetCommandList()->DrawInstanced(3, 1, 0, 0);
 
+	barriers[0] = {};
+	barriers[1] = {};
+	barrierCount = 0;
 
-	barrier = {};
-	barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-	barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-	barrier.Transition.pResource = dxCommon_->GetRenderTextureResource();
-	barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-	barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-	barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
-	dxCommon_->GetCommandList()->ResourceBarrier(1, &barrier);
+	//カラーバッファを戻す	
+	barriers[barrierCount].Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+	barriers[barrierCount].Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+	barriers[barrierCount].Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+	barriers[barrierCount].Transition.pResource = dxCommon_->GetRenderTextureResource();
+	barriers[barrierCount].Transition.StateBefore = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+	barriers[barrierCount].Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
+	barrierCount++;
+
+	if (currentEffect_ == EffectType::kDepthBasedOutline)
+	{
+		//深度バッファを戻す
+		barriers[barrierCount].Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+		barriers[barrierCount].Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+		barriers[barrierCount].Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+		barriers[barrierCount].Transition.pResource = dxCommon_->GetDepthResource();
+		barriers[barrierCount].Transition.StateBefore = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+		barriers[barrierCount].Transition.StateAfter = D3D12_RESOURCE_STATE_DEPTH_WRITE;
+		barrierCount++;
+	}
+
+
+	dxCommon_->GetCommandList()->ResourceBarrier(barrierCount, barriers);
 
 }
 
@@ -115,7 +181,9 @@ void PostEffect::DebugUpdate()
 
 #ifdef USE_IMGUI
 
-	const char* effectNames[] = { "Grayscale","Vignette","Smoothing","Gaussian","LuminanceBasedOutline"};
+	materialData->projectionInverse = Inverse(camera_->GetProjectionMatrix());
+
+	const char* effectNames[] = { "Grayscale","Vignette","Smoothing","Gaussian","LuminanceBasedOutline","DepthBasedOutline" };
 	int currentItem = static_cast<int>(currentEffect_);
 
 	ImGui::Begin("PostEffectSettings");
@@ -123,11 +191,11 @@ void PostEffect::DebugUpdate()
 		currentEffect_ = static_cast<EffectType>(currentItem);
 	}
 
-	if (currentEffect_ == EffectType::Vignetting) 
+	if (currentEffect_ == EffectType::kVignetting)
 	{
 		ImGui::DragFloat("Scale", &vignetteData->scale, 0.1f);
 		ImGui::DragFloat("Power", &vignetteData->power, 0.01f);
-	}  else if (currentEffect_ == EffectType::Gaussian)
+	} else if (currentEffect_ == EffectType::kGaussian)
 	{
 		int kernelSize = static_cast<int>(gaussianData->kernel);
 		if (ImGui::SliderInt("kernel", &kernelSize, 3, 7))
@@ -136,8 +204,14 @@ void PostEffect::DebugUpdate()
 				kernelSize += 1;
 			}
 		}
-		ImGui::DragFloat("sigma", &gaussianData->sigma, 0.1f);
+		ImGui::DragFloat("sigma", &gaussianData->sigma, 0.01f);
 		gaussianData->kernel = static_cast<uint32_t>(kernelSize);
+	} else if (currentEffect_ == EffectType::kLumBasedOutline)
+	{
+		ImGui::DragFloat("edgeWeight", &lumOutlineData->edgeWeight, 0.1f, 0.0f, 10.0f);
+	} else if (currentEffect_ == EffectType::kDepthBasedOutline)
+	{
+		ImGui::DragFloat("edgeWeight", &depthOutlineData->edgeWeight, 0.1f, 0.0f, 10.0f);
 	}
 
 	ImGui::End();
@@ -163,8 +237,15 @@ void PostEffect::CreateRootSignature()
 	descriptorRange[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;//SRVを使う
 	descriptorRange[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;//offsetを自動計算
 
+	//Degth用のDescriptorRange
+	D3D12_DESCRIPTOR_RANGE depthDescriptorRange[1] = {};
+	depthDescriptorRange[0].BaseShaderRegister = 1;
+	depthDescriptorRange[0].NumDescriptors = 1;//数は1つ
+	depthDescriptorRange[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;//SRVを使う
+	depthDescriptorRange[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;//offsetを自動計算
+
 	//Sampler
-	D3D12_STATIC_SAMPLER_DESC staticSamplers[1] = {};
+	D3D12_STATIC_SAMPLER_DESC staticSamplers[2] = {};
 	staticSamplers[0].Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;//バイリニアフィルタ
 	staticSamplers[0].AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;//0～1の範囲外をリピート
 	staticSamplers[0].AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
@@ -174,20 +255,40 @@ void PostEffect::CreateRootSignature()
 	staticSamplers[0].ShaderRegister = 0;//レジスタ番号0を使う
 	staticSamplers[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;//PixelShaderを使う
 
+	staticSamplers[1].Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;//ポイントフィルタ
+	staticSamplers[1].AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;//0～1の範囲外をリピート
+	staticSamplers[1].AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	staticSamplers[1].AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	staticSamplers[1].ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;//比較しない
+	staticSamplers[1].MaxLOD = D3D12_FLOAT32_MAX;//ありったけのMipmapを使う
+	staticSamplers[1].ShaderRegister = 1;//レジスタ番号1を使う
+	staticSamplers[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;//PixelShaderを使う
+
 	descriptionRootSignature.pStaticSamplers = staticSamplers;
 	descriptionRootSignature.NumStaticSamplers = _countof(staticSamplers);
 
 
 	//RootParameter作成。複数設定できるので配列。PixelShaderのMaterialとVertexShaderのTransform
-	D3D12_ROOT_PARAMETER rootParameters[2] = {};
+	D3D12_ROOT_PARAMETER rootParameters[4] = {};
+	//register(t0)
 	rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
 	rootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;//Pixelを使う
-	rootParameters[0].DescriptorTable.NumDescriptorRanges = _countof(descriptorRange);
+	rootParameters[0].DescriptorTable.NumDescriptorRanges = 1;
 	rootParameters[0].DescriptorTable.pDescriptorRanges = descriptorRange;
-	rootParameters[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;//CBVを使う
-	rootParameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;//PixelShdaderで使う
-	rootParameters[1].Descriptor.ShaderRegister = 0;//レジスタ番号1を使う
-	
+	//register(t1)
+	rootParameters[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+	rootParameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;//Pixelを使う
+	rootParameters[1].DescriptorTable.NumDescriptorRanges = 1;
+	rootParameters[1].DescriptorTable.pDescriptorRanges = depthDescriptorRange;
+	//register(b0)
+	rootParameters[2].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;//CBVを使う
+	rootParameters[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;//PixelShdaderで使う
+	rootParameters[2].Descriptor.ShaderRegister = 0;//レジスタ番号0を使う
+	//register(b1)
+	rootParameters[3].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;//CBVを使う
+	rootParameters[3].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;//PixelShdaderで使う
+	rootParameters[3].Descriptor.ShaderRegister = 1;//レジスタ番号1を使う
+
 
 	descriptionRootSignature.pParameters = rootParameters;//ルートパラメータ配列へのポインタ
 	descriptionRootSignature.NumParameters = _countof(rootParameters);//配列の長さ
@@ -243,7 +344,7 @@ void PostEffect::CreateGraphicsPipeline()
 		L"vs_6_0");
 	assert(vertexShaderBlob != nullptr);
 
-	
+
 
 	//DepthStencilStateの設定
 	D3D12_DEPTH_STENCIL_DESC depthStencilDesc{};
@@ -261,7 +362,7 @@ void PostEffect::CreateGraphicsPipeline()
 	graphicsPipelineStateDesc.InputLayout = inputLayoutDesc;//InputLayout
 	graphicsPipelineStateDesc.VS = { vertexShaderBlob->GetBufferPointer(),
 	vertexShaderBlob->GetBufferSize() };//VertexShader
-	
+
 	graphicsPipelineStateDesc.BlendState = blendDesc;//BlendState
 	graphicsPipelineStateDesc.RasterizerState = rasterizerDesc;//RasterizerState
 	//書き込むRTVの情報
@@ -286,9 +387,10 @@ void PostEffect::CreateGraphicsPipeline()
 		L"resources/shaders/BoxFilter.PS.hlsl",
 		L"resources/shaders/GaussianFilter.PS.hlsl",
 		L"resources/shaders/LuminanceBasedOutline.PS.hlsl",
+		L"resources/shaders/DepthBasedOutline.PS.hlsl",
 	};
 
-	for (size_t i = 0; i < static_cast<size_t>(EffectType::Count);i++)
+	for (size_t i = 0; i < static_cast<size_t>(EffectType::Count); i++)
 	{
 		Microsoft::WRL::ComPtr<IDxcBlob> pixelShaderBlob = dxCommon_->CompileShader(psPaths[i].c_str(),
 			L"ps_6_0");
@@ -302,6 +404,6 @@ void PostEffect::CreateGraphicsPipeline()
 			IID_PPV_ARGS(&graphicsPipelineStates_[i]));
 	}
 
-	
+
 
 }
