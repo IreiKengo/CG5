@@ -65,46 +65,17 @@ void PostEffect::Initialize(DirectXCommon* dxCommon, std::string textureFilePath
 
 void PostEffect::Draw()
 {
-	D3D12_RESOURCE_BARRIER barriers[2] = {};
-	UINT barrierCount = 0;
 
-	//カラー
-	barriers[barrierCount].Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-	barriers[barrierCount].Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-	barriers[barrierCount].Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-	barriers[barrierCount].Transition.pResource = dxCommon_->GetRenderTextureResource();
-	barriers[barrierCount].Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
-	barriers[barrierCount].Transition.StateAfter = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-	barrierCount++;
 
-	//深度バッファ
-	if (currentEffect_ == EffectType::kDepthBasedOutline)
-	{
-		barriers[barrierCount].Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-		barriers[barrierCount].Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-		barriers[barrierCount].Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-		barriers[barrierCount].Transition.pResource = dxCommon_->GetDepthResource();
-		barriers[barrierCount].Transition.StateBefore = D3D12_RESOURCE_STATE_DEPTH_WRITE;
-		barriers[barrierCount].Transition.StateAfter = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-		barrierCount++;
-	}
-
-	dxCommon_->GetCommandList()->ResourceBarrier(barrierCount, barriers);
+	ChangeRenderTargetState(false);
+	
 
 	UINT backBufferIndex = dxCommon_->GetSwapChain()->GetCurrentBackBufferIndex();
 	D3D12_CPU_DESCRIPTOR_HANDLE swapChainHandle = rtvManager_->GetSwapChainHandle(backBufferIndex);
 
-	D3D12_RESOURCE_BARRIER swapChainBarrier{};
-	swapChainBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-	swapChainBarrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-	// ※GetSwapChainResourceについては下の補足を読んでね
-	swapChainBarrier.Transition.pResource = dxCommon_->GetSwapChainResource(backBufferIndex);
-	swapChainBarrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-	swapChainBarrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
-	swapChainBarrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
-	dxCommon_->GetCommandList()->ResourceBarrier(1, &swapChainBarrier);
-
-
+	//swapChainBarrier
+	TransitionBarrier(dxCommon_->GetSwapChainResource(backBufferIndex), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+	
 
 	// 画面に対して描画を設定（ポストエフェクトなので深度バッファは nullptr でOK）
 	dxCommon_->GetCommandList()->OMSetRenderTargets(1, &swapChainHandle, FALSE, nullptr);
@@ -130,57 +101,12 @@ void PostEffect::Draw()
 		srvManager_->SetGraphicsRootDescriptorTable(1, dxCommon_->GetDepthBufferSrvIndex());
 	}
 
-	if (currentEffect_ == EffectType::kVignetting)
-	{
-		dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(2, vignetteResource->GetGPUVirtualAddress());
-	} else if (currentEffect_ == EffectType::kGaussian)
-	{
-		dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(2, gaussianResource->GetGPUVirtualAddress());
-	} else if (currentEffect_ == EffectType::kLumBasedOutline)
-	{
-		dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(2, lumOutlineResource->GetGPUVirtualAddress());
-	} else if (currentEffect_ == EffectType::kDepthBasedOutline)
-	{
-		dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(2, depthOutlineResource->GetGPUVirtualAddress());
-		dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(3, materialResource->GetGPUVirtualAddress());
-
-	} else if (currentEffect_ == EffectType::kRadialBlur)
-	{
-		dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(2, radialBlurResource->GetGPUVirtualAddress());
-	}else{
-		dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(2, vignetteResource->GetGPUVirtualAddress());
-	}
+	ChangeSetCBV();
 
 	//頂点3つ描画
 	dxCommon_->GetCommandList()->DrawInstanced(3, 1, 0, 0);
 
-	barriers[0] = {};
-	barriers[1] = {};
-	barrierCount = 0;
-
-	//カラーバッファを戻す	
-	barriers[barrierCount].Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-	barriers[barrierCount].Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-	barriers[barrierCount].Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-	barriers[barrierCount].Transition.pResource = dxCommon_->GetRenderTextureResource();
-	barriers[barrierCount].Transition.StateBefore = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-	barriers[barrierCount].Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
-	barrierCount++;
-
-	if (currentEffect_ == EffectType::kDepthBasedOutline)
-	{
-		//深度バッファを戻す
-		barriers[barrierCount].Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-		barriers[barrierCount].Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-		barriers[barrierCount].Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-		barriers[barrierCount].Transition.pResource = dxCommon_->GetDepthResource();
-		barriers[barrierCount].Transition.StateBefore = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-		barriers[barrierCount].Transition.StateAfter = D3D12_RESOURCE_STATE_DEPTH_WRITE;
-		barrierCount++;
-	}
-
-
-	dxCommon_->GetCommandList()->ResourceBarrier(barrierCount, barriers);
+	ChangeRenderTargetState(true);
 
 }
 
@@ -419,4 +345,98 @@ void PostEffect::CreateGraphicsPipeline()
 
 
 
+}
+
+void PostEffect::SetCBV(UINT rootParameterIndex, ID3D12Resource* resource)
+{
+	dxCommon_->GetCommandList()->SetGraphicsRootConstantBufferView(rootParameterIndex, resource->GetGPUVirtualAddress());
+}
+
+void PostEffect::ChangeSetCBV()
+{
+
+	if (currentEffect_ == EffectType::kVignetting)
+	{
+		SetCBV(2, vignetteResource.Get());
+		
+	} else if (currentEffect_ == EffectType::kGaussian)
+	{
+		SetCBV(2, gaussianResource.Get());
+		
+	} else if (currentEffect_ == EffectType::kLumBasedOutline)
+	{
+		SetCBV(2, lumOutlineResource.Get());
+		
+	} else if (currentEffect_ == EffectType::kDepthBasedOutline)
+	{
+		SetCBV(2, depthOutlineResource.Get());
+		SetCBV(3, materialResource.Get());
+		
+
+	} else if (currentEffect_ == EffectType::kRadialBlur)
+	{
+		SetCBV(2, radialBlurResource.Get());
+	
+	} else {
+		SetCBV(2, vignetteResource.Get());
+		
+	}
+}
+
+void PostEffect::TransitionBarrier(ID3D12Resource* resource, D3D12_RESOURCE_STATES stateBefore, D3D12_RESOURCE_STATES stateAfter)
+{
+
+	D3D12_RESOURCE_BARRIER barrier{};
+	barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+	barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+	barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+	barrier.Transition.pResource = resource;
+	barrier.Transition.StateBefore = stateBefore;
+	barrier.Transition.StateAfter = stateAfter;
+
+	dxCommon_->GetCommandList()->ResourceBarrier(1, &barrier);
+
+}
+
+void PostEffect::ChangeRenderTargetState(bool writable)
+{
+	D3D12_RESOURCE_STATES colorStateBefore;
+	D3D12_RESOURCE_STATES colorStateAfter;
+
+	if (!writable)
+	{
+		//描画前
+		colorStateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
+		colorStateAfter = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+		
+			
+	} else {
+		//描画後
+		colorStateBefore = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+		colorStateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
+	}
+
+	//カラー
+	TransitionBarrier(dxCommon_->GetRenderTextureResource(), colorStateBefore, colorStateAfter);
+
+	D3D12_RESOURCE_STATES depthStateBefore;
+	D3D12_RESOURCE_STATES depthStateAfter;
+
+	if (!writable)
+	{
+		//描画前
+		depthStateBefore = D3D12_RESOURCE_STATE_DEPTH_WRITE;
+		depthStateAfter = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+		
+
+	} else {
+		//描画後
+		depthStateBefore = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+		depthStateAfter = D3D12_RESOURCE_STATE_DEPTH_WRITE;
+	}
+
+	if (currentEffect_ == EffectType::kDepthBasedOutline)
+	{
+		TransitionBarrier(dxCommon_->GetDepthResource(), depthStateBefore, depthStateAfter);
+	}
 }

@@ -113,4 +113,10 @@ private:
 	//グラフィックスパイプラインの作成
 	void CreateGraphicsPipeline();
 
+	void SetCBV(UINT rootParameterIndex, ID3D12Resource* resource);
+	void ChangeSetCBV();
+	void TransitionBarrier(ID3D12Resource* resource,D3D12_RESOURCE_STATES stateBefore,D3D12_RESOURCE_STATES stateAfter);
+	void ChangeRenderTargetState(bool writable);
+
+
 };
