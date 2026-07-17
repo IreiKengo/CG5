@@ -40,6 +40,9 @@
     <FxCompile Include="resources\shaders\Dissolve.PS.hlsl">
       <Filter>リソース ファイル</Filter>
     </FxCompile>
+    <FxCompile Include="resources\shaders\Random.PS.hlsl">
+      <Filter>リソース ファイル</Filter>
+    </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ソースファイル\engine\math\Matrix4x4Math.cpp">

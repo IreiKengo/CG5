@@ -118,7 +118,7 @@ void PostEffect::DebugUpdate()
 
 	material.data->projectionInverse = Inverse(camera_->GetProjectionMatrix());
 
-	const char* effectNames[] = { "Grayscale","Vignette","Smoothing","Gaussian","LuminanceBasedOutline","DepthBasedOutline","RadialBlur","Dissolve"};
+	const char* effectNames[] = { "Grayscale","Vignette","Smoothing","Gaussian","LuminanceBasedOutline","DepthBasedOutline","RadialBlur","Dissolve","Random"};
 	int currentItem = static_cast<int>(currentEffect_);
 
 	ImGui::Begin("PostEffectSettings");
@@ -156,6 +156,9 @@ void PostEffect::DebugUpdate()
 		ImGui::SliderFloat("threshold", &dissolve.data->threshold, 0.01f, 1.0f);
 		ImGui::SliderFloat("edgeRange", &dissolve.data->edgeRange, 0.0f, 0.3f);
 		ImGui::ColorEdit3("edgeColor", &dissolve.data->edgeColor.x);
+	} else if (currentEffect_ == EffectType::kRandom)
+	{
+
 	}
 
 	ImGui::End();
@@ -334,6 +337,7 @@ void PostEffect::CreateGraphicsPipeline()
 		L"resources/shaders/DepthBasedOutline.PS.hlsl",
 		L"resources/shaders/RadialBlur.PS.hlsl",
 		L"resources/shaders/Dissolve.PS.hlsl",
+		L"resources/shaders/Random.PS.hlsl",
 	};
 
 	for (size_t i = 0; i < static_cast<size_t>(EffectType::Count); i++)

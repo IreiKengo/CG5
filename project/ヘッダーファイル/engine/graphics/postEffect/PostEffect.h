@@ -24,6 +24,7 @@ public:
 		kDepthBasedOutline,
 		kRadialBlur,
 		kDissolve,
+		kRandom,
 
 		Count//エフェクトの総数
 	};
