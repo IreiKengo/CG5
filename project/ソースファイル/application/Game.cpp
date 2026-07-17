@@ -170,7 +170,7 @@ void Game::Initialize()
 
 	postEffect = new PostEffect();
 
-	postEffect->Initialize(dxCommon, texturePath,camera);
+	postEffect->Initialize(dxCommon,camera, "resources/noise0.png");
 
 }
 
@@ -260,18 +260,18 @@ void Game::Draw()
 	//DirectXの描画基準。全ての描画に共通宇のグラッフィックスコマンドを積む
 	dxCommon->PreDraw();
 	
-
+	
 	//3Dオブジェクトの描画準備。3Dオブジェクトの描画に共通のグラフィックスコマンドを積む
 	object3dCommon->ScreenCommon();
-
 
 	//全てのObject3d個々の描画
 	for (uint32_t i = 0; i < 2; ++i)
 	{
+
 		object[i]->Draw();
 
 	}
-
+	
 	//Spriteの描画基準。Spriteの描画の共通のグラッフィックスコマンドを積む
 	//spriteCommon->ScreenCommon();
 

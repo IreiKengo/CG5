@@ -22,6 +22,7 @@ struct GaussianFilter
 {
     uint32_t kernel; //カーネルサイズ(最大7)
     float32_t sigma; //シグマ値
+    float32_t2 padding;
     
 };
 ConstantBuffer<GaussianFilter> gGaussianFilter : register(b0);

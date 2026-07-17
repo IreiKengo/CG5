@@ -4,6 +4,7 @@
 #include <string>
 #include "Matrix4x4.h"
 #include "Vector2.h"
+#include "Vector3.h"
 
 class DirectXCommon;
 class SrvManager;
@@ -22,15 +23,23 @@ public:
 		kLumBasedOutline,
 		kDepthBasedOutline,
 		kRadialBlur,
+		kDissolve,
 
 		Count//エフェクトの総数
+	};
+
+	template <typename T>
+	struct ConstantBufferInfo {
+		Microsoft::WRL::ComPtr<ID3D12Resource> resource; // バッファリソース
+		T* data = nullptr;// バッファリソース内のデータを指すポインタ
 	};
 
 	struct Vignette
 	{
 		float scale;
 		float power;
-		float Padding[62];
+		float padding[2];
+		
 	};
 
 	struct GaussianFilter
@@ -55,11 +64,23 @@ public:
 	{
 		Vector2 center;
 		float blurWidth;
+		float padding;
 	};
 
-	void Initialize(DirectXCommon* dxCommon,std::string textureFilePath,Camera*camera);
+	struct Dissolve
+	{
+		float threshold;
+		float edgeRange;
+		float padding[2];
+		Vector3 edgeColor;
+		float padding2;
+	};
+
+	void Initialize(DirectXCommon* dxCommon,Camera*camera, std::string textureFilePath);
 	void Draw();
 	void DebugUpdate();
+
+	
 
 private:
 
@@ -71,42 +92,21 @@ private:
 	//選択されているエフェクト
 	EffectType currentEffect_ = EffectType::kVignetting;
 
-	// バッファリソース
-	Microsoft::WRL::ComPtr<ID3D12Resource> vignetteResource;
-	// バッファリソース内のデータを指すポインタ
-	Vignette* vignetteData = nullptr;
-
-	// バッファリソース
-	Microsoft::WRL::ComPtr<ID3D12Resource> gaussianResource;
-	// バッファリソース内のデータを指すポインタ
-	GaussianFilter* gaussianData = nullptr;
-
-	// バッファリソース
-	Microsoft::WRL::ComPtr<ID3D12Resource> lumOutlineResource;
-	// バッファリソース内のデータを指すポインタ
-	Outline* lumOutlineData = nullptr;
-
-	// バッファリソース
-	Microsoft::WRL::ComPtr<ID3D12Resource> depthOutlineResource;
-	// バッファリソース内のデータを指すポインタ
-	Outline* depthOutlineData = nullptr;
-
-	// バッファリソース
-	Microsoft::WRL::ComPtr<ID3D12Resource> materialResource;
-	// バッファリソース内のデータを指すポインタ
-	Material* materialData = nullptr;
-
-	// バッファリソース
-	Microsoft::WRL::ComPtr<ID3D12Resource> radialBlurResource;
-	// バッファリソース内のデータを指すポインタ
-	RadialBlur* radialBlurData = nullptr;
+	ConstantBufferInfo<Vignette> vignette;
+	ConstantBufferInfo<GaussianFilter> gaussian;
+	ConstantBufferInfo<Outline> lumOutline;
+	ConstantBufferInfo<Outline> depthOutline;
+	ConstantBufferInfo<Material> material;
+	ConstantBufferInfo<RadialBlur> radialBlur;
+	ConstantBufferInfo<Dissolve> dissolve;
 
 	DirectXCommon* dxCommon_ = nullptr;
 	SrvManager* srvManager_ = nullptr;
 	RtvManager* rtvManager_ = nullptr;
 	
 	Camera* camera_ = nullptr;
-
+	//Dissolve用
+	uint32_t maskTextureSrvIndex_ = 0;
 
 	//ルートシグネチャの作成
 	void CreateRootSignature();

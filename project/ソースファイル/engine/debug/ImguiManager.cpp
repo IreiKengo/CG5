@@ -14,7 +14,7 @@ void ImguiManager::Initialize([[maybe_unused]] WinApp* winApp, [[maybe_unused]] 
 	winApp_ = winApp;
 	dxCommon_ = dxCommon;
 	srvManager_ = dxCommon_->GetSrvManager();
-
+	
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImGui::StyleColorsDark();

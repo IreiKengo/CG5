@@ -5,6 +5,7 @@ struct RadialBlur
 {
     float32_t2 center; //中心点。ここを基準に放射状にブラーがかかる
     float32_t blurWidth; //ぼかしの幅。
+    float32_t padding;
 };
 
 struct PixelShaderOutput

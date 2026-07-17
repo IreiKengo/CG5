@@ -19,15 +19,15 @@ class DirectXCommon
 {
 public:
 
-	void Initialize(WinApp*winApp);
+	void Initialize(WinApp* winApp);
 
 	//描画前処理
 	void PreDraw();
 	//描画後処理
 	void PostDraw();
-	
 
-	
+
+
 
 
 	//getter
@@ -45,8 +45,10 @@ public:
 	D3D12_VIEWPORT GetViewport() const { return viewport; }
 	D3D12_RECT GetScissorRect() const { return scissorRect; }
 	ID3D12Resource* GetSwapChainResource(uint32_t index) const { return swapChainResources[index].Get(); }
-	uint32_t GetDepthBufferSrvIndex()const {return depthBufferSrvIndex_; }
+	uint32_t GetDepthBufferSrvIndex()const { return depthBufferSrvIndex_; }
 	ID3D12Resource* GetDepthResource() const { return depthResource.Get(); }
+	uint32_t GetRenderTextureRtvIndex() const { return renderTextureRtvIndex_; }
+	D3D12_CPU_DESCRIPTOR_HANDLE GetDsvCpuDescriptorHandle() const { return dsvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(); }
 
 	//シェーダーのコンパイル
 	Microsoft::WRL::ComPtr<IDxcBlob> CompileShader(
@@ -63,7 +65,7 @@ public:
 
 	[[nodiscard]]
 	Microsoft::WRL::ComPtr<ID3D12Resource> UploadTextureData(const Microsoft::WRL::ComPtr<ID3D12Resource>& texture, const DirectX::ScratchImage& mipImages);
-	
+
 
 	//デスクリプタヒープ生成関数
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE heapType, UINT numDesctiptors, bool shaderVisible);
@@ -86,12 +88,9 @@ private:
 	DXGI_SWAP_CHAIN_DESC1 swapChainDesc{};
 	Microsoft::WRL::ComPtr<ID3D12Resource> depthResource = nullptr;
 
-	//深度バッファ
-
 	//各種デスクリプタサイズ
 	uint32_t descriptorSizeDSV;
 
-	
 	//DSVのデスクリプターヒープ
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> dsvDescriptorHeap;
 
@@ -121,68 +120,68 @@ private:
 	DXGI_FORMAT rtvFormat_ = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
 
 	//WindowsAPI
-WinApp* winApp_ = nullptr;
+	WinApp* winApp_ = nullptr;
 
 
-//記録時間
-std::chrono::steady_clock::time_point reference_;
+	//記録時間
+	std::chrono::steady_clock::time_point reference_;
+
+	Vector4 clearColor_ = { 0.1f,0.25f,0.5f,1.0f };
+
+	SrvManager srvManager_;
+	RtvManager rtvManager_;
+	// RenderTexture用のリソースとSRVインデックス
+	Microsoft::WRL::ComPtr<ID3D12Resource> renderTextureResource;
+	uint32_t renderTextureSrvIndex_ = 0;
+	uint32_t renderTextureRtvIndex_ = 0;
+
+	//Depth用のSRVIndex
+	uint32_t depthBufferSrvIndex_ = 0;
 
 
+	//デバイスの初期化
+	void InitializeDevice();
 
-SrvManager srvManager_;
-RtvManager rtvManager_;
-// RenderTexture用のリソースとSRVインデックス
-Microsoft::WRL::ComPtr<ID3D12Resource> renderTextureResource;
-uint32_t renderTextureSrvIndex_ = 0;
-uint32_t renderTextureRtvIndex_ = 0;
+	//コマンド関連の初期化
+	void InitializeCommand();
 
-//Depth用のSRVIndex
-uint32_t depthBufferSrvIndex_ = 0;
+	//スワップチェーンの生成
+	void InitializeSwapChain();
 
+	//深度バッファの生成
+	void CreateDepthStencilTextureResource();
 
-//デバイスの初期化
-void InitializeDevice();
+	//各種デスクリプタヒープの生成
+	void CreateDescriptorHeaps();
 
-//コマンド関連の初期化
-void InitializeCommand();
+	//レンダーターゲットビューの初期化
+	void InitializeRenderTargetView();
 
-//スワップチェーンの生成
-void InitializeSwapChain();
+	//深度ステンシルビューの初期化
+	void InitializeDepthStencilView();
 
-//深度バッファの生成
-void CreateDepthStencilTextureResource();
+	//フェンスの生成
+	void CreateFence();
 
-//各種デスクリプタヒープの生成
-void CreateDescriptorHeaps();
+	//ビューポート矩形の初期化
+	void InitializeViewportRect();
 
-//レンダーターゲットビューの初期化
-void InitializeRenderTargetView();
+	//シザリング矩形の初期化
+	void InitializescissorRect();
 
-//深度ステンシルビューの初期化
-void InitializeDepthStencilView();
+	//DXCコンパイラの生成
+	void CreateDXCCompiler();
 
-//フェンスの生成
-void CreateFence();
+	//ImGuiの初期化
+	//void InitializeImGui();
 
-//ビューポート矩形の初期化
-void InitializeViewportRect();
-
-//シザリング矩形の初期化
-void InitializescissorRect();
-
-//DXCコンパイラの生成
-void CreateDXCCompiler();
-
-//ImGuiの初期化
-//void InitializeImGui();
-
-//FPS固定初期化
-void InitializeFixFPS();
-//FPS固定更新
-void UpdateFixFPS();
+	//FPS固定初期化
+	void InitializeFixFPS();
+	//FPS固定更新
+	void UpdateFixFPS();
 
 
-void InitializeRenderTexture();
+	void InitializeRenderTexture();
 
 
 

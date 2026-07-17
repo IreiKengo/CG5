@@ -15,7 +15,7 @@ using namespace StringUtility;
 using namespace Logger;
 using namespace math;
 
-void PostEffect::Initialize(DirectXCommon* dxCommon, std::string textureFilePath, Camera* camera)
+void PostEffect::Initialize(DirectXCommon* dxCommon, Camera* camera, std::string textureFilePath )
 {
 	dxCommon_ = dxCommon;
 	camera_ = camera;
@@ -23,62 +23,60 @@ void PostEffect::Initialize(DirectXCommon* dxCommon, std::string textureFilePath
 	srvManager_ = dxCommon_->GetSrvManager();
 	rtvManager_ = dxCommon_->GetRtvManager();
 
-	vignetteResource = dxCommon_->CreateBufferResource(sizeof(Vignette));
+	vignette.resource = dxCommon_->CreateBufferResource(sizeof(Vignette));
+	vignette.resource->Map(0, nullptr, reinterpret_cast<void**>(&vignette.data));
+	vignette.data->scale = 16.0f;
+	vignette.data->power = 0.8f;
 
-	vignetteResource->Map(0, nullptr, reinterpret_cast<void**>(&vignetteData));
+	gaussian.resource = dxCommon_->CreateBufferResource(sizeof(GaussianFilter));
+	gaussian.resource->Map(0, nullptr, reinterpret_cast<void**>(&gaussian.data));
+	gaussian.data->kernel = 7;
+	gaussian.data->sigma = 2.0f;
 
-	vignetteData->scale = 16.0f;
-	vignetteData->power = 0.8f;
+	lumOutline.resource = dxCommon_->CreateBufferResource(sizeof(Outline));
+	lumOutline.resource->Map(0, nullptr, reinterpret_cast<void**>(&lumOutline.data));
+	lumOutline.data->edgeWeight = 6.0f;
 
-	gaussianResource = dxCommon_->CreateBufferResource(sizeof(GaussianFilter));
-	gaussianResource->Map(0, nullptr, reinterpret_cast<void**>(&gaussianData));
+	depthOutline.resource = dxCommon_->CreateBufferResource(sizeof(Outline));
+	depthOutline.resource->Map(0, nullptr, reinterpret_cast<void**>(&depthOutline.data));
+	depthOutline.data->edgeWeight = 6.0f;
 
-	gaussianData->kernel = 7;
-	gaussianData->sigma = 2.0f;
+	material.resource = dxCommon_->CreateBufferResource(sizeof(Material));
+	material.resource->Map(0, nullptr, reinterpret_cast<void**>(&material.data));
+	material.data->projectionInverse = Inverse(camera_->GetProjectionMatrix());
 
-	lumOutlineResource = dxCommon_->CreateBufferResource(sizeof(Outline));
-	lumOutlineResource->Map(0, nullptr, reinterpret_cast<void**>(&lumOutlineData));
+	radialBlur.resource = dxCommon_->CreateBufferResource(sizeof(RadialBlur));
+	radialBlur.resource->Map(0, nullptr, reinterpret_cast<void**>(&radialBlur.data));
+	radialBlur.data->center = { 0.5f,0.5f };
+	radialBlur.data->blurWidth = 0.01f;
 
-	lumOutlineData->edgeWeight = 6.0f;
+	dissolve.resource = dxCommon_->CreateBufferResource(sizeof(Dissolve));
+	dissolve.resource->Map(0, nullptr, reinterpret_cast<void**>(&dissolve.data));
+	dissolve.data->threshold = 0.5f;
+	dissolve.data->edgeRange = 0.1f;
+	dissolve.data->edgeColor = { 1.0f,0.4f,0.3f };
 
-	depthOutlineResource = dxCommon_->CreateBufferResource(sizeof(Outline));
-	depthOutlineResource->Map(0, nullptr, reinterpret_cast<void**>(&depthOutlineData));
-
-	depthOutlineData->edgeWeight = 6.0f;
-
-	materialResource = dxCommon_->CreateBufferResource(sizeof(Material));
-	materialResource->Map(0, nullptr, reinterpret_cast<void**>(&materialData));
-
-	materialData->projectionInverse = Inverse(camera_->GetProjectionMatrix());
-
-	radialBlurResource = dxCommon_->CreateBufferResource(sizeof(RadialBlur));
-	radialBlurResource->Map(0, nullptr, reinterpret_cast<void**>(&radialBlurData));
-
-	radialBlurData->center = { 0.5f,0.5f };
-	radialBlurData->blurWidth = 0.01f;
+	std::string maskPath = textureFilePath;
+	TextureManager::GetInstance()->LoadTexture(maskPath);
+	
+	maskTextureSrvIndex_ = TextureManager::GetInstance()->GetTextureIndexByFilePath(maskPath);
 
 	CreateGraphicsPipeline();
-
-
 
 }
 
 void PostEffect::Draw()
 {
-
-
 	ChangeRenderTargetState(false);
-	
 
 	UINT backBufferIndex = dxCommon_->GetSwapChain()->GetCurrentBackBufferIndex();
 	D3D12_CPU_DESCRIPTOR_HANDLE swapChainHandle = rtvManager_->GetSwapChainHandle(backBufferIndex);
-
-	//swapChainBarrier
-	TransitionBarrier(dxCommon_->GetSwapChainResource(backBufferIndex), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
 	
 
 	// 画面に対して描画を設定（ポストエフェクトなので深度バッファは nullptr でOK）
 	dxCommon_->GetCommandList()->OMSetRenderTargets(1, &swapChainHandle, FALSE, nullptr);
+	float clearColor[] = { 0.3f, 1.0f, 0.0f, 1.0f }; 
+	dxCommon_->GetCommandList()->ClearRenderTargetView(swapChainHandle, clearColor, 0, nullptr);
 
 	// ビューポートとシザー矩形を通常の画面サイズに設定し直す
 	D3D12_VIEWPORT viewport = dxCommon_->GetViewport();
@@ -99,6 +97,9 @@ void PostEffect::Draw()
 	if (currentEffect_ == EffectType::kDepthBasedOutline)
 	{
 		srvManager_->SetGraphicsRootDescriptorTable(1, dxCommon_->GetDepthBufferSrvIndex());
+	} else if (currentEffect_ == EffectType::kDissolve)
+	{
+		srvManager_->SetGraphicsRootDescriptorTable(1, maskTextureSrvIndex_);
 	}
 
 	ChangeSetCBV();
@@ -106,8 +107,8 @@ void PostEffect::Draw()
 	//頂点3つ描画
 	dxCommon_->GetCommandList()->DrawInstanced(3, 1, 0, 0);
 
+	
 	ChangeRenderTargetState(true);
-
 }
 
 void PostEffect::DebugUpdate()
@@ -115,9 +116,9 @@ void PostEffect::DebugUpdate()
 
 #ifdef USE_IMGUI
 
-	materialData->projectionInverse = Inverse(camera_->GetProjectionMatrix());
+	material.data->projectionInverse = Inverse(camera_->GetProjectionMatrix());
 
-	const char* effectNames[] = { "Grayscale","Vignette","Smoothing","Gaussian","LuminanceBasedOutline","DepthBasedOutline","RadialBlur"};
+	const char* effectNames[] = { "Grayscale","Vignette","Smoothing","Gaussian","LuminanceBasedOutline","DepthBasedOutline","RadialBlur","Dissolve"};
 	int currentItem = static_cast<int>(currentEffect_);
 
 	ImGui::Begin("PostEffectSettings");
@@ -127,29 +128,34 @@ void PostEffect::DebugUpdate()
 
 	if (currentEffect_ == EffectType::kVignetting)
 	{
-		ImGui::DragFloat("Scale", &vignetteData->scale, 0.1f);
-		ImGui::DragFloat("Power", &vignetteData->power, 0.01f);
+		ImGui::DragFloat("Scale", &vignette.data->scale, 0.1f);
+		ImGui::DragFloat("Power", &vignette.data->power, 0.01f);
 	} else if (currentEffect_ == EffectType::kGaussian)
 	{
-		int kernelSize = static_cast<int>(gaussianData->kernel);
+		int kernelSize = static_cast<int>(gaussian.data->kernel);
 		if (ImGui::SliderInt("kernel", &kernelSize, 3, 7))
 		{
 			if (kernelSize % 2 == 0) {
 				kernelSize += 1;
 			}
 		}
-		ImGui::DragFloat("sigma", &gaussianData->sigma, 0.01f);
-		gaussianData->kernel = static_cast<uint32_t>(kernelSize);
+		ImGui::DragFloat("sigma", &gaussian.data->sigma, 0.01f);
+		gaussian.data->kernel = static_cast<uint32_t>(kernelSize);
 	} else if (currentEffect_ == EffectType::kLumBasedOutline)
 	{
-		ImGui::DragFloat("edgeWeight", &lumOutlineData->edgeWeight, 0.1f, 0.0f, 10.0f);
+		ImGui::DragFloat("edgeWeight", &lumOutline.data->edgeWeight, 0.1f, 0.0f, 10.0f);
 	} else if (currentEffect_ == EffectType::kDepthBasedOutline)
 	{
-		ImGui::DragFloat("edgeWeight", &depthOutlineData->edgeWeight, 0.1f, 0.0f, 10.0f);
+		ImGui::DragFloat("edgeWeight", &depthOutline.data->edgeWeight, 0.1f, 0.0f, 10.0f);
 	} else if (currentEffect_ == EffectType::kRadialBlur)
 	{
-		ImGui::DragFloat2("center", &radialBlurData->center.x, 0.1f);
-		ImGui::DragFloat("blurWidth", &radialBlurData->blurWidth, 0.01f, 0.0f, 10.0f);
+		ImGui::DragFloat2("center", &radialBlur.data->center.x, 0.1f);
+		ImGui::DragFloat("blurWidth", &radialBlur.data->blurWidth, 0.01f, 0.0f, 10.0f);
+	} else if (currentEffect_ == EffectType::kDissolve)
+	{
+		ImGui::SliderFloat("threshold", &dissolve.data->threshold, 0.01f, 1.0f);
+		ImGui::SliderFloat("edgeRange", &dissolve.data->edgeRange, 0.0f, 0.3f);
+		ImGui::ColorEdit3("edgeColor", &dissolve.data->edgeColor.x);
 	}
 
 	ImGui::End();
@@ -176,11 +182,11 @@ void PostEffect::CreateRootSignature()
 	descriptorRange[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;//offsetを自動計算
 
 	//Degth用のDescriptorRange
-	D3D12_DESCRIPTOR_RANGE depthDescriptorRange[1] = {};
-	depthDescriptorRange[0].BaseShaderRegister = 1;
-	depthDescriptorRange[0].NumDescriptors = 1;//数は1つ
-	depthDescriptorRange[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;//SRVを使う
-	depthDescriptorRange[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;//offsetを自動計算
+	D3D12_DESCRIPTOR_RANGE descriptorRangeT1[1] = {};
+	descriptorRangeT1[0].BaseShaderRegister = 1;
+	descriptorRangeT1[0].NumDescriptors = 1;//数は1つ
+	descriptorRangeT1[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;//SRVを使う
+	descriptorRangeT1[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;//offsetを自動計算
 
 	//Sampler
 	D3D12_STATIC_SAMPLER_DESC staticSamplers[2] = {};
@@ -217,7 +223,7 @@ void PostEffect::CreateRootSignature()
 	rootParameters[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
 	rootParameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;//Pixelを使う
 	rootParameters[1].DescriptorTable.NumDescriptorRanges = 1;
-	rootParameters[1].DescriptorTable.pDescriptorRanges = depthDescriptorRange;
+	rootParameters[1].DescriptorTable.pDescriptorRanges = descriptorRangeT1;
 	//register(b0)
 	rootParameters[2].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;//CBVを使う
 	rootParameters[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;//PixelShdaderで使う
@@ -327,6 +333,7 @@ void PostEffect::CreateGraphicsPipeline()
 		L"resources/shaders/LuminanceBasedOutline.PS.hlsl",
 		L"resources/shaders/DepthBasedOutline.PS.hlsl",
 		L"resources/shaders/RadialBlur.PS.hlsl",
+		L"resources/shaders/Dissolve.PS.hlsl",
 	};
 
 	for (size_t i = 0; i < static_cast<size_t>(EffectType::Count); i++)
@@ -357,29 +364,31 @@ void PostEffect::ChangeSetCBV()
 
 	if (currentEffect_ == EffectType::kVignetting)
 	{
-		SetCBV(2, vignetteResource.Get());
+		SetCBV(2, vignette.resource.Get());
 		
 	} else if (currentEffect_ == EffectType::kGaussian)
 	{
-		SetCBV(2, gaussianResource.Get());
+		SetCBV(2, gaussian.resource.Get());
 		
 	} else if (currentEffect_ == EffectType::kLumBasedOutline)
 	{
-		SetCBV(2, lumOutlineResource.Get());
+		SetCBV(2, lumOutline.resource.Get());
 		
 	} else if (currentEffect_ == EffectType::kDepthBasedOutline)
 	{
-		SetCBV(2, depthOutlineResource.Get());
-		SetCBV(3, materialResource.Get());
+		SetCBV(2, depthOutline.resource.Get());
+		SetCBV(3, material.resource.Get());
 		
 
 	} else if (currentEffect_ == EffectType::kRadialBlur)
 	{
-		SetCBV(2, radialBlurResource.Get());
+		SetCBV(2, radialBlur.resource.Get());
 	
+	} else if (currentEffect_ == EffectType::kDissolve)
+	{
+		SetCBV(2, dissolve.resource.Get());
 	} else {
-		SetCBV(2, vignetteResource.Get());
-		
+		SetCBV(2, vignette.resource.Get());
 	}
 }
 
@@ -424,13 +433,13 @@ void PostEffect::ChangeRenderTargetState(bool writable)
 
 	if (!writable)
 	{
-		//描画前
+		//Outline描画前
 		depthStateBefore = D3D12_RESOURCE_STATE_DEPTH_WRITE;
 		depthStateAfter = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 		
 
 	} else {
-		//描画後
+		//Outline描画後
 		depthStateBefore = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 		depthStateAfter = D3D12_RESOURCE_STATE_DEPTH_WRITE;
 	}

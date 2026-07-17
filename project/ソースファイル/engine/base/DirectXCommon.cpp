@@ -71,42 +71,40 @@ void DirectXCommon::Initialize(WinApp* winApp)
 void DirectXCommon::PreDraw()
 {
 
-
 	// これから書き込むバッグバッファのインデックスを取得
 	UINT backBufferIndex = swapChain->GetCurrentBackBufferIndex();
 
 	////TransitionBarrierの設定
 	////今回のバリアはTransition
-	//barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+	barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
 	////Noneにしておく
-	//barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+	barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
 	////バリアの張る対象のリソース。現在のバッグバッファに対して行う
-	//barrier.Transition.pResource = swapChainResources[backBufferIndex].Get();
+	barrier.Transition.pResource = swapChainResources[backBufferIndex].Get();
 	////遷移前（現在）のResourceState
-	//barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
+	barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
 	////遷移後のResourceState
-	//barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
+	barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
 	////TransitionBarrierを張る
-	//commandList->ResourceBarrier(1, &barrier);
+	commandList->ResourceBarrier(1, &barrier);
+
+
+
 
 	//描画先のRTVとDSVを設定する
 	D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = dsvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
 
-	//commandList->OMSetRenderTargets(1,&rtvManager_.GetSwapChainHandle(backBufferIndex),false,&dsvHandle);
-
 	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = rtvManager_.GetCPUDescriptorHandle(renderTextureRtvIndex_);
-	commandList->OMSetRenderTargets(1, &rtvHandle, false, &dsvHandle);
+	commandList->OMSetRenderTargets(1, &rtvHandle, false, &dsvHandle);	
 
-	//指定した色で画面全体をクリアする
-	//float clearColor[] = { 0.1f,0.25f,0.5f,1.0f };//青っぽい色。RGBAの順
-	float clearColor[] = { 1.0f,0.0f,0.0f,1.0f };//赤
-	commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
+	
 	commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+	commandList->ClearRenderTargetView(rtvHandle, &clearColor_.x, 0, nullptr);
+
 	
 
 	commandList->RSSetViewports(1, &viewport);//Viewportを設定
 	commandList->RSSetScissorRects(1, &scissorRect);//Scirssorを設定
-
 	srvManager_.PreDraw();
 
 }
@@ -686,8 +684,8 @@ Microsoft::WRL::ComPtr<ID3D12Resource> DirectXCommon::CreateRenderTextureResourc
 void DirectXCommon::InitializeRenderTexture()
 {
 
-	const Vector4 kRenderTargetClearValue{ 1.0f,0.0f,0.0f,1.0f };//いったんわかりやすいように赤
-	renderTextureResource = CreateRenderTextureResource(DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,kRenderTargetClearValue);
+	
+	renderTextureResource = CreateRenderTextureResource(DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,clearColor_);
 
 	//RTVの作成
 	renderTextureRtvIndex_ = rtvManager_.Allocate();

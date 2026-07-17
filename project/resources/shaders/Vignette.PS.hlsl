@@ -12,6 +12,7 @@ struct Vignette
 {
     float32_t scale;
     float32_t power;
+    float32_t2 padding;
 };
 ConstantBuffer<Vignette> gVignette : register(b0);
 
