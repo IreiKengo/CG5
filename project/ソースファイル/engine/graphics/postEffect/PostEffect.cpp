@@ -56,6 +56,11 @@ void PostEffect::Initialize(DirectXCommon* dxCommon, Camera* camera, std::string
 	dissolve.data->edgeRange = 0.1f;
 	dissolve.data->edgeColor = { 1.0f,0.4f,0.3f };
 
+	random.resource = dxCommon_->CreateBufferResource(sizeof(Random));
+	random.resource->Map(0, nullptr, reinterpret_cast<void**>(&random.data));
+
+	random.data->time = 0.0f;
+
 	std::string maskPath = textureFilePath;
 	TextureManager::GetInstance()->LoadTexture(maskPath);
 	
@@ -158,7 +163,7 @@ void PostEffect::DebugUpdate()
 		ImGui::ColorEdit3("edgeColor", &dissolve.data->edgeColor.x);
 	} else if (currentEffect_ == EffectType::kRandom)
 	{
-
+		random.data->time += 0.01f;
 	}
 
 	ImGui::End();
@@ -369,28 +374,31 @@ void PostEffect::ChangeSetCBV()
 	if (currentEffect_ == EffectType::kVignetting)
 	{
 		SetCBV(2, vignette.resource.Get());
-		
+
 	} else if (currentEffect_ == EffectType::kGaussian)
 	{
 		SetCBV(2, gaussian.resource.Get());
-		
+
 	} else if (currentEffect_ == EffectType::kLumBasedOutline)
 	{
 		SetCBV(2, lumOutline.resource.Get());
-		
+
 	} else if (currentEffect_ == EffectType::kDepthBasedOutline)
 	{
 		SetCBV(2, depthOutline.resource.Get());
 		SetCBV(3, material.resource.Get());
-		
+
 
 	} else if (currentEffect_ == EffectType::kRadialBlur)
 	{
 		SetCBV(2, radialBlur.resource.Get());
-	
+
 	} else if (currentEffect_ == EffectType::kDissolve)
 	{
 		SetCBV(2, dissolve.resource.Get());
+	} else if (currentEffect_ == EffectType::kRandom)
+	{
+		SetCBV(2, random.resource.Get());
 	} else {
 		SetCBV(2, vignette.resource.Get());
 	}

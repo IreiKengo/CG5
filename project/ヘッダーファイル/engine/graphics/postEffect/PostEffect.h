@@ -77,6 +77,11 @@ public:
 		float padding2;
 	};
 
+	struct Random
+	{
+		float time;
+	};
+
 	void Initialize(DirectXCommon* dxCommon,Camera*camera, std::string textureFilePath);
 	void Draw();
 	void DebugUpdate();
@@ -100,6 +105,7 @@ private:
 	ConstantBufferInfo<Material> material;
 	ConstantBufferInfo<RadialBlur> radialBlur;
 	ConstantBufferInfo<Dissolve> dissolve;
+	ConstantBufferInfo<Random> random;
 
 	DirectXCommon* dxCommon_ = nullptr;
 	SrvManager* srvManager_ = nullptr;
