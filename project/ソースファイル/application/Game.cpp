@@ -18,6 +18,7 @@
 #include <filesystem>
 #include "ImguiManager.h"
 #include "PostEffect.h"
+#include "Input.h"
 
 #pragma comment(lib,"Dbghelp.lib")
 
@@ -77,8 +78,8 @@ void Game::Initialize()
 #pragma region カメラの初期化
 
 	camera = new Camera();
-	camera->SetRotate({ 0.0f,0.0f,0.0f });
-	camera->SetTranslate({ 0.0f,0.0f,-10.0f });
+	camera->SetRotate({ 0.1396f,0.0f,0.0f });
+	camera->SetTranslate({ 0.0f,4.3f,-31.0f });
 #pragma endregion 
 
 #pragma region スプライト関連
@@ -231,6 +232,7 @@ void Game::Update()
 
 	postEffect->DebugUpdate();
 
+
 	//カメラの更新
 	camera->Update();
 
@@ -243,6 +245,9 @@ void Game::Update()
 		object[i]->Update();
 	}
 
+	postEffect->Update();
+	UpdateEffectInput();
+	
 	float deltaTime = 1.0f / 60.0f; // 本来は実時間計測
 
 
@@ -292,5 +297,97 @@ void Game::Draw()
 
 	TextureManager::GetInstance()->ReleaseIntermediateResources();
 
+}
+
+void Game::UpdateEffectInput()
+{
+
+	if (input->TriggerKey(DIK_1))
+	{
+		postEffect->SetEffectType(PostEffect::EffectType::kGrayscale);
+
+	} else if (input->TriggerKey(DIK_2))
+	{
+		postEffect->SetEffectType(PostEffect::EffectType::kVignetting);
+	} else if (input->TriggerKey(DIK_3))
+	{
+		postEffect->SetEffectType(PostEffect::EffectType::kSmoothing);
+	} else if (input->TriggerKey(DIK_4))
+	{
+		postEffect->SetEffectType(PostEffect::EffectType::kGaussian);
+	} else if (input->TriggerKey(DIK_5))
+	{
+		postEffect->SetEffectType(PostEffect::EffectType::kLumBasedOutline);
+	} else if (input->TriggerKey(DIK_6))
+	{
+		postEffect->SetEffectType(PostEffect::EffectType::kDepthBasedOutline);
+	} else if (input->TriggerKey(DIK_7))
+	{
+		postEffect->SetEffectType(PostEffect::EffectType::kRadialBlur);
+	} else if (input->TriggerKey(DIK_8))
+	{
+		postEffect->SetEffectType(PostEffect::EffectType::kDissolve);
+	} else if (input->TriggerKey(DIK_9))
+	{
+		postEffect->SetEffectType(PostEffect::EffectType::kRandom);
+	}
+
+
+
+	// 1. Vignette (1:Scale, 2:Power)
+	if (postEffect->GetEffectType() == PostEffect::EffectType::kVignetting)
+	{
+		if (input->PushKey(DIK_W))    postEffect->AddVignetteScale(0.1f);
+		if (input->PushKey(DIK_S))  postEffect->AddVignetteScale(-0.1f);
+		if (input->PushKey(DIK_D)) postEffect->AddVignettePower(0.01f);
+		if (input->PushKey(DIK_A))  postEffect->AddVignettePower(-0.01f);
+	}
+	// 2. Gaussian (1:Kernel, 2:Sigma)
+	else if (postEffect->GetEffectType() == PostEffect::EffectType::kGaussian)
+	{
+		if (input->TriggerKey(DIK_W))   postEffect->AddGaussianKernel(1);
+		if (input->TriggerKey(DIK_S)) postEffect->AddGaussianKernel(-1);
+		if (input->PushKey(DIK_D))   postEffect->AddGaussianSigma(0.05f);
+		if (input->PushKey(DIK_A))    postEffect->AddGaussianSigma(-0.05f);
+	}
+	// 3. Luminance Based Outline (1:EdgeWeight)
+	else if (postEffect->GetEffectType() == PostEffect::EffectType::kLumBasedOutline)
+	{
+		if (input->PushKey(DIK_W))   postEffect->AddLumOutlineEdgeWeight(0.1f);
+		if (input->PushKey(DIK_S)) postEffect->AddLumOutlineEdgeWeight(-0.1f);
+	}
+	// 4. Depth Based Outline (1:EdgeWeight)
+	else if (postEffect->GetEffectType() == PostEffect::EffectType::kDepthBasedOutline)
+	{
+		if (input->PushKey(DIK_W))   postEffect->AddDepthOutlineEdgeWeight(0.1f);
+		if (input->PushKey(DIK_S)) postEffect->AddDepthOutlineEdgeWeight(-0.1f);
+	}
+	// 5. Radial Blur (1:BlurWidth, 2:Center Position)
+	else if (postEffect->GetEffectType() == PostEffect::EffectType::kRadialBlur)
+	{
+		if (input->PushKey(DIK_UP))    postEffect->AddRadialBlurWidth(0.005f);
+		if (input->PushKey(DIK_DOWN))  postEffect->AddRadialBlurWidth(-0.005f);
+		float moveX = 0.0f;
+		float moveY = 0.0f;
+
+		if (input->PushKey(DIK_D)) moveX += 0.01f; // 右
+		if (input->PushKey(DIK_A)) moveX -= 0.01f; // 左
+		if (input->PushKey(DIK_S)) moveY += 0.01f; // 下（UV座標系では下がプラス）
+		if (input->PushKey(DIK_W)) moveY -= 0.01f; // 上（UV座標系では上がマイナス）
+
+		// X と Y の移動量を両方渡す！
+		if (moveX != 0.0f || moveY != 0.0f) {
+			postEffect->AddRadialBlurCenter(moveX, moveY);
+		}
+	}
+	// 6. Dissolve (1:Threshold, 2:EdgeRange)
+	else if (postEffect->GetEffectType() == PostEffect::EffectType::kDissolve)
+	{
+		if (input->PushKey(DIK_W))    postEffect->AddDissolveThreshold(0.01f);
+		if (input->PushKey(DIK_S))  postEffect->AddDissolveThreshold(-0.01f);
+		if (input->PushKey(DIK_D)) postEffect->AddDissolveEdgeRange(0.005f);
+		if (input->PushKey(DIK_A))  postEffect->AddDissolveEdgeRange(-0.005f);
+	}
+	
 }
 

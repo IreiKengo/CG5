@@ -70,6 +70,15 @@ void PostEffect::Initialize(DirectXCommon* dxCommon, Camera* camera, std::string
 
 }
 
+void PostEffect::Update()
+{
+	material.data->projectionInverse = Inverse(camera_->GetProjectionMatrix());
+	if (currentEffect_ == EffectType::kRandom)
+	{
+		random.data->time += 0.01f;
+	}
+}
+
 void PostEffect::Draw()
 {
 	ChangeRenderTargetState(false);
@@ -121,7 +130,7 @@ void PostEffect::DebugUpdate()
 
 #ifdef USE_IMGUI
 
-	material.data->projectionInverse = Inverse(camera_->GetProjectionMatrix());
+	
 
 	const char* effectNames[] = { "Grayscale","Vignette","Smoothing","Gaussian","LuminanceBasedOutline","DepthBasedOutline","RadialBlur","Dissolve","Random"};
 	int currentItem = static_cast<int>(currentEffect_);
@@ -163,7 +172,7 @@ void PostEffect::DebugUpdate()
 		ImGui::ColorEdit3("edgeColor", &dissolve.data->edgeColor.x);
 	} else if (currentEffect_ == EffectType::kRandom)
 	{
-		random.data->time += 0.01f;
+		
 	}
 
 	ImGui::End();

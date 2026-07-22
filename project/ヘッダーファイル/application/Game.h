@@ -53,4 +53,7 @@ private:
 
 	PostEffect* postEffect = nullptr;
 
+	void UpdateEffectInput();
+
+
 };
